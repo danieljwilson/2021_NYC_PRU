@@ -1,0 +1,28 @@
+# Don't track content of these folders #
+########################################
+
+# Don't share data
+##################
+Data
+*/Data/*
+
+# Ignore all logs #
+###################
+*.log
+
+# Ignore checkpoints #
+######################
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# R Stuff #
+###########
+*.Rproj.user
+*/.Rproj.user
+*.Rhistory
+*.DS_Store
+.Rproj.user
+
+# Virtual environment stuff
+*/.venv/*
+*/.vscode/*
