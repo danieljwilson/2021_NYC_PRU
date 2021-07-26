@@ -1,7 +1,9 @@
+library(tidyverse)
 library(shinydashboard)
 library(plotly)
 library(shiny)
 library(DT)
+library(data.table)
 
 ui <- dashboardPage(
   dashboardHeader(title = "PRU Web App Mockup"),
@@ -55,7 +57,7 @@ ui <- dashboardPage(
                   plotlyOutput("plot_poverty1")
                 )
               ),
-              p('As you can see, this plot using the World Bank\'s extreme poverty threshold is not very useful if we want to learn about the state of poverty in the US.'),
+              p('This plot using the World Bank\'s extreme poverty threshold, as you can see, is not very useful if we want to learn about the state of poverty in the US.'),
               p('In the ', strong('Results'), ' section we explain how our poverty threshold for New York City is calculated to take into account the specific living conditions of the city.'),
               hr()
       ),
@@ -87,7 +89,7 @@ ui <- dashboardPage(
               p("In a city where almost 1 in 5 people are living below the poverty threshold it is inevitable that you cross paths with people living in poverty on a daily basis. But do you know how these pepole are? Or what that experience is like?"),
               p("Five New Yorkers living under the city's poverty threshold, one from each borough, have generously allowed us to share their stories with you."),
               hr(),
-              h1("John Doe"),
+              h2("John Doe"),
               h4("48, Sunset Park"),
               img(src = "john.jpg", width="65%"),
               hr(),
@@ -497,8 +499,51 @@ ui <- dashboardPage(
                 hr(),
                 fluidRow(
                   box(
+                    title = "Options",
+                    width = 12,
+                    
+                    column(4,
+                           selectizeInput("checkbox_data_comparison_year", 
+                                          label = "Select year(s)", 
+                                          choices = c("2013" = 2013, 
+                                                      "2014" = 2014, 
+                                                      "2015" = 2015,
+                                                      "2016" = 2016, 
+                                                      "2017" = 2017, 
+                                                      "2018" = 2018),
+                                          selected = 2016,
+                                          multiple = TRUE)
+                    ),
+                    
+                    column(4,
+                      selectizeInput(
+                        inputId = 'selectize_data_comparison_pop_characteristics',
+                        label = 'Sub-Population',
+                        choices = c(
+                          'Age' = 'age_categ',
+                          'Borough' = 'boro',
+                          'Disability' = 'dis',
+                          'Educational Attainment' = 'educ_attain',
+                          'Ethnicity' = 'ethnicity',
+                          'Housing Status' = 'ten',
+                          'Sex' = 'sex'
+                        ),
+                        multiple = TRUE
+                      )
+                    ),
+                    column(4,
+                           helpText(
+                             h4('Note'),
+                             helpText('You must select at least ',
+                                      tags$strong('one year '),
+                                      'and ',
+                                      tags$strong('one sub-population'),
+                                      ' in order to create a data table.')
+                           ))
+                  ),
+                  box(
                     title = 'NYC Poverty Data',
-                    width = 9,
+                    width = 12,
                     tabsetPanel(type = "tabs",
                                 tabPanel("Data", dataTableOutput("table_data_comparison_1")),
                                 tabPanel("Source/Notes",
@@ -509,34 +554,7 @@ ui <- dashboardPage(
                                          tags$strong('Notes:'),
                                          'Numbers in bold indicate a statistically significant change from prior year. U.S. official poverty rates are based on the NYCgov poverty universe and unit of analysis. See Appendix A for details.')
                     )
-                  ),
-                  box(
-                    title = "Options",
-                    width = 3,
-                    selectInput(
-                      inputId = "year",
-                      label = "Year:",
-                      choices = c("2016",
-                                  "2017",
-                                  "2018",
-                                  "All")
-                    ),
-                    
-                    selectizeInput(
-                      inputId = 'population',
-                      label = 'Sub-Population',
-                      choices = c(
-                        'Age' = 'age_categ',
-                        'Borough' = 'boro',
-                        'Disability' = 'dis',
-                        'Educational Attainment' = 'educ_attain',
-                        'Ethnicity' = 'ethnicity',
-                        'Housing Status' = 'ten',
-                        'Sex' = 'sex'
-                      ),
-                      multiple = TRUE
-                    )
-                    )
+                  )
                   )
                 )
               
@@ -558,6 +576,8 @@ ui <- dashboardPage(
 server <- function(input, output) {
   ## Poverty ----
   global_poverty_rate = read_csv('temp_data/world_bank_poverty.csv')
+  # load cleaned data from clean_data.R (maybe source?)
+  df = read_csv("../../../Data/NYCgov_Poverty_Measure_Data_cleaned.csv")
   
   output$plot_poverty1 <- renderPlotly({
     global_poverty_rate %>%
@@ -650,7 +670,7 @@ server <- function(input, output) {
   
   ## Data Detail ----
   output$plot_data_detail <- renderPlot({
-    incomes = df_c %>%
+    incomes = df %>%
       filter(sex == input$select_data_detail_sex) %>%
       filter(age_categ == input$select_data_detail_age) %>%
       filter(boro == input$select_data_detail_borough) %>%
@@ -663,10 +683,10 @@ server <- function(input, output) {
     incomes[incomes<0] = 0
     
     dens <- density(incomes, from = 0)
-    df <- data.frame(x=dens$x, y=dens$y)
+    df_dens <- data.frame(x=dens$x, y=dens$y)
     breaks <- c(0, poverty, near_poverty, Inf)
-    df$quant <- factor(findInterval(df$x,breaks))
-    ggplot(df, aes(x,y)) + 
+    df_dens$quant <- factor(findInterval(df$x,breaks))
+    ggplot(df_dens, aes(x,y)) + 
       geom_line() + 
       geom_ribbon(aes(ymin=0, ymax=y, fill=quant)) + 
       scale_x_continuous(labels = scales::comma) + 
@@ -679,21 +699,82 @@ server <- function(input, output) {
   })
   
   ## Data Comparison ----
+
+  df %>%
+    filter(year == 2016) %>%
+    group_by(year, age_categ, boro) %>%
+    summarise(citywide_perc=round(sum((pwgtp*nyc_gov_in_pov)/nyc_pop)*100, 2),
+              cat_perc=round(sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp))*100, 2),
+              n_sample = length(pwgtp)
+    )
+    
   selections = reactive({
-    req(input$year)
-    req(input$population)
-    filter(df_c, year == input$year) %>%
+    validate(
+      need(input$checkbox_data_comparison_year, 'Select at least one year'),
+      need(input$selectize_data_comparison_pop_characteristics != '', 'Choose comparison dimensions')
+    )
+    req(input$checkbox_data_comparison_year)
+    req(input$selectize_data_comparison_pop_characteristics)
+    filter(df, year == input$checkbox_data_comparison_year) %>%
       # this is making it take the list as var names (below)
-      group_by(!!!syms(append(pop_characteristics, 'nyc_gov_poverty_status'))) %>% 
-      summarise(percentage=sum(pwgtp)/8e6*100)
+      group_by(!!!syms(append('year', input$selectize_data_comparison_pop_characteristics))) %>%
+      summarise(cat_perc = round(sum((pwgtp*nyc_gov_in_pov)) / sum(pwgtp) * 100, 2),
+                citywide_perc = round( (sum(pwgtp*nyc_gov_in_pov) / mean(population)) * 100, 2),
+                n_pov_weighted = sum((pwgtp*nyc_gov_in_pov)),
+                # n_sample = length(pwgtp),
+                # n_weighted = sum(pwgtp),
+                # se calc. based on binomial property for variance (p * 1-p)
+                ## https://www.sapling.com/6183888/calculate-sampling-error-percentages
+                # se = round((sqrt((sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)) * (1-sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)))) / (n()-1)))*100, 2),
+                ## coefficient of variation (https://influentialpoints.com/Training/coefficient_of_variation_of_a_mean.htm)
+                cv = round((100*sd(nyc_gov_in_pov)) / (mean(nyc_gov_in_pov) * sqrt(n())), 2),
+                ci95 = round(qnorm(0.975) * (sqrt((sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)) * (1-sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)))) / (n()-1)))*100, 2)
+      ) %>%
+      datatable(extensions = list('Buttons'),
+                options = list(
+                  dom = 'Bfrtip',
+                  buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                  scrollX = TRUE,
+                  scrollY = "400px",
+                  paging = FALSE
+                )) %>%
+      formatStyle('cat_perc',
+                  background = styleColorBar(range(0,50), 'lightblue'),
+                  backgroundSize = '98% 88%',
+                  backgroundRepeat = 'no-repeat',
+                  backgroundPosition = 'center') %>%
+      formatStyle('n_pov_weighted',
+                  background = styleColorBar(range(0,2e6), 'lightblue'),
+                  backgroundSize = '98% 88%',
+                  backgroundRepeat = 'no-repeat',
+                  backgroundPosition = 'center') %>%
+      # color palette: https://coolors.co/d9ed92-b5e48c-99d98c-76c893-52b69a-34a0a4-168aad-1a759f-1e6091-184e77
+      formatStyle('age_categ',
+                  backgroundColor = styleEqual(c('Under 18', '18-64', '65+'),
+                                               c('#d9ed92', '#b5e48c', '#99d98c'))
+      )%>%
+      formatStyle('boro',
+                  backgroundColor = styleEqual(c('Bronx', 'Brooklyn', 'Manhattan', 'Queens', 'Staten Island'),
+                                               c('#d9ed92', '#b5e48c', '#99d98c', '#76c893', '#52b69a'))
+      )%>%
+      formatStyle('cv',
+                  target = 'row',
+                  backgroundColor = styleInterval(15, c('', 'gray'))
+      )
+    
   })
   
 output$table_data_comparison_1 <- renderDataTable(
-  selections(),
-  extensions = 'Buttons', options = list(
-    dom = 'Bfrtip',
-    buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
-  )
+  selections()#,
+  # extensions = list('Buttons',
+  #                   'FixedHeader'),
+  # options = list(
+  #   dom = 'Bfrtip',
+  #   buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+  #   scrollX = TRUE,
+  #   paging = FALSE,
+  #   fixedHeader = TRUE
+  # )
 )
   
   
