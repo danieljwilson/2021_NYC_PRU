@@ -1,0 +1,144 @@
+---
+title: "Data Munging"
+author: "Daniel J Wilson for PRU"
+date: "8/2/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Overview
+
+The goal of this document is to provide a clear overview to how data is imported and cleaned for use in the `R Shiny` PRU Web App. The goal is that this can be updated each year to add the latest data with minimal work.
+
+## Import libraries
+
+```{r imports}
+library(tidyverse)
+```
+
+## Import Raw Data
+
+Load in each year's file, select columns of interest, and append to create a long dataframe.
+
+```{r testing}
+df = read_csv('../../../Data/full_data/2015_FINAL.CSV')
+
+
+```
+
+```{r long_df, echo=FALSE}
+
+#set the path from which the files will be read from
+path = '/Users/djw/Documents/pCloud_synced/Academics/Projects/2021_NYC_PRU/Data/openData/'
+
+#create a list of the files from your target directory
+file_list <- list.files(path=path)
+
+#initiate a blank data frame, each iteration of the loop will append the data from the given file to this variable
+dataset <- data.frame()
+
+for (i in 1:length(file_list)){
+  # load in each individual year
+  df = read_csv(paste0(path, file_list[i]))
+  
+  # select only columns of interest
+  
+  df_c = df[c('PWGTP', 'AgeCateg', 'SEX', 'Boro', 'Ethnicity',
+              'TEN', 'CitizenStatus', 'EducAttain', 'FTPTWork',
+              'FamType_PU', 'DIS', 'Off_Pov_Stat', 'NYCgov_Pov_Stat',
+              'NYCgov_Income')]
+  
+  ##### 1.3 Specify data types #####
+  
+  categorical_cols = c('AgeCateg', 'SEX', 'Boro', 'Ethnicity',
+                       'TEN', 'CitizenStatus', 'EducAttain', 'FTPTWork',
+                       'FamType_PU', 'DIS', 'Off_Pov_Stat', 'NYCgov_Pov_Stat')
+  
+  df_c = df_c %>%
+    mutate_at(categorical_cols, factor)
+  
+  str(df_c)
+  
+  ##### 1.4 Rename #####
+  # rename the columns to standardize formatting
+  # convert to snake case
+  df_c = df_c %>%
+    janitor::clean_names(abbreviations = c("NYC"))
+  
+  # rename the factor levels for legibility
+  sort(names(Filter(is.factor, df_c)))
+  
+  
+  
+  df_c = df_c %>%
+    mutate(age_categ = recode(age_categ,
+                              `1` = 'Under 18',
+                              `2` = '18-64',
+                              `3` = '65+')) %>%
+    mutate(boro = recode(boro,
+                         `1` = 'Bronx',
+                         `2` = 'Brooklyn',
+                         `3` = 'Manhattan',
+                         `4` = 'Queens',
+                         `5` = 'Staten Island')) %>%
+    mutate(citizen_status = recode(citizen_status,
+                                   `1` = 'Citizen (Birth)',
+                                   `2` = 'Citizen (Naturalized)',
+                                   `3` = 'Not a Citizen')) %>%
+    mutate(dis = recode(dis,
+                        `1` = 'With disability',
+                        `2` = 'No disability')) %>%
+    mutate(educ_attain = recode(educ_attain,
+                                `1` = '< High School',
+                                `2` = 'High School Degree',
+                                `3` = 'Some College',
+                                `4` = 'Bachelor Degree+')) %>%
+    mutate(ethnicity = recode(ethnicity,
+                              `1` = 'White (non-hispanic)',
+                              `2` = 'Black (non-hispanic)',
+                              `3` = 'Asian (non-hispanic)',
+                              `4` = 'Hispanic (any race)',
+                              `5` = 'Other Race/Ethnic Group')) %>%
+    mutate(fam_type_pu = recode(fam_type_pu,
+                                `1` = 'Husband/Wife + child ',
+                                `2` = 'Husband/Wife no child ',
+                                `3` = 'Single Male + child ',
+                                `4` = 'Single Female + child ',
+                                `5` = 'Male unit head, no child ',
+                                `6` = 'Female unit head, no child ',
+                                `7` = 'Unrelated Indiv w/others 8 Unrelated Indiv Alone')) %>%
+    mutate(ftpt_work = recode(ftpt_work,
+                              `1` = 'Full Time Year Round',
+                              `2` = 'Less than Full Time Year Round',
+                              `3` = 'No Work')) %>%
+    mutate(sex = recode(sex,
+                        `1` = 'Male',
+                        `2` = 'Female')) %>%
+    mutate(ten = recode(ten,
+                        `1` = 'Owned - mortgage',
+                        `2` = 'Owned - free and clear',
+                        `3` = 'Rented',
+                        `4` = 'Occupied without payment of rent'))
+  
+  ##### 1.5 Add computed columns #####
+  # dummy code official and NYCgov poverty measures
+  # doing manually for clarity - could also use fastDummies library
+  df_c$nyc_gov_in_pov <- ifelse(df_c$nyc_gov_pov_stat == 1, 1, 0)
+  df_c$nyc_off_in_pov <- ifelse(df_c$off_pov_stat == 1, 1, 0)
+  
+  ##### 1.6 Add Year ----
+  df_c$year = as.numeric(paste0('20', substr(strsplit(file_list[i], '20')[[1]][2], 1,2)))
+  
+  ##### 1.7 Add Population ----
+  df_c$population = sum(df_c$pwgtp)
+  
+  # append data
+  dataset <- rbind(dataset, df_c) #for each iteration, bind the new data to the building dataset
+}
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

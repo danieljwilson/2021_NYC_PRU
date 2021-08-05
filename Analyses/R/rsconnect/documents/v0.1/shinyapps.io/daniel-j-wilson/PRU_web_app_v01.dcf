@@ -1,0 +1,14 @@
+name: PRU_web_app_v01
+title: PRU_web_app_v01
+username:
+account: daniel-j-wilson
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4448307
+bundleId: 4888617
+url: https://daniel-j-wilson.shinyapps.io/PRU_web_app_v01/
+when: 1628104219.47169
+lastSyncTime: 1628104219.4717
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: data_cleaning.html|data_cleaning.Rmd|r_scripts/app_testing.R|r_scripts/clean_data.R
