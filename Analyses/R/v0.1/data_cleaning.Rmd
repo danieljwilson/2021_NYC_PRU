@@ -19,24 +19,28 @@ The goal of this document is to provide a clear overview to how data is imported
 library(tidyverse)
 ```
 
-## Import Raw Data
+## Collect Import Files
 
-Load in each year's file, select columns of interest, and append to create a long dataframe.
+First make a list of all files that we need to load.
 
-```{r testing}
-df = read_csv('../../../Data/full_data/2015_FINAL.CSV')
+In this case we are specifying the directory where the files are located and then telling it to make a list of all `.csv` files in this directory.
 
+```{r file-list}
+# set the path from which the files will be read from
+path = '../../../Data/full_data/'
 
+# create a list of the files from your target directory
+file_list <- list.files(path = path, pattern = '\\.csv', ignore.case = TRUE)
 ```
 
+## Clean Data
+
+In this step we will:
+
+1. take a small subset of the original dataframes according to the information we will present.
+    - [This](https://docs.google.com/spreadsheets/d/1ndZtYpCjD4CCIyGU2chJjw6yMPr4PDQY6q8OJeoYpso/edit?usp=sharing) is a file that lists the column *Names* and *Descriptions*, along with coding information.
+
 ```{r long_df, echo=FALSE}
-
-#set the path from which the files will be read from
-path = '/Users/djw/Documents/pCloud_synced/Academics/Projects/2021_NYC_PRU/Data/openData/'
-
-#create a list of the files from your target directory
-file_list <- list.files(path=path)
-
 #initiate a blank data frame, each iteration of the loop will append the data from the given file to this variable
 dataset <- data.frame()
 
