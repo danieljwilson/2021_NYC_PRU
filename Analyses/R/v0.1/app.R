@@ -252,7 +252,7 @@ ui <- dashboardPage(
                         width = 9,
                         status = 'primary',
                         tabsetPanel(type = "tabs",
-                                    tabPanel("Plot", plotlyOutput("plot_1_1_rate")),
+                                    tabPanel("Plot", plotOutput("plot_1_1_rate")),
                                     tabPanel("Data", dataTableOutput('table_1_1_rate')),
                                     tabPanel("Source/Notes",
                                              tags$strong('Source:'),
@@ -291,7 +291,11 @@ ui <- dashboardPage(
                         title = "Select Years",
                         width = 3,
                         sliderInput("slider_1_2", label = NULL, min = 2005, 
-                                    max = 2019, value = c(2005, 2019), sep='', ticks = FALSE)
+                                    max = 2019, value = c(2005, 2019), sep='', ticks = FALSE),
+                        hr(),
+                        radioButtons("radio_1_2", label = NULL,
+                                     choices = list("Family of four" = "family",
+                                                    "Single person" = "single"), selected = "family")
                       )
                     )
                   )
@@ -327,14 +331,14 @@ ui <- dashboardPage(
                         h3('NYCgov Poverty Rates, 2015-2019'),
                         column(3,
                                selectInput("select_1_2_options", h4("Options"), 
-                                           choices = list("Age" = 'age_categ', "Sex" = 'sex',
-                                                          "Race/Ethnicity" = 'ethnicity',
+                                           choices = list("Age" = 'AgeCateg', "Sex" = 'SEX',
+                                                          "Race/Ethnicity" = 'Ethnicity',
                                                           "Race/Ethnicity and Gender" = 'ethnicity_sex',
-                                                          "Citizenship Status" = 'citizen_status',
-                                                          "Educational Attainment" = 'educ_attain',
-                                                          "Work Experience" = 'ftpt_work',
-                                                          "Borough" = 'boro'
-                                                          ), selected = 'age_categ')
+                                                          "Citizenship Status" = 'CitizenStatus',
+                                                          "Educational Attainment" = 'EducAttain',
+                                                          "Work Experience" = 'FTPTWork',
+                                                          "Borough" = 'Boro'
+                                                          ), selected = 'AgeCateg')
                                ),
                         column(9,
                                tabsetPanel(type = "tabs",
@@ -737,13 +741,29 @@ ui <- dashboardPage(
               fluidRow(
                 infoBox("Citizens In Poverty", format(round(8420000 * .179, 2), big.mark = ","),
                         icon = icon("file-invoice-dollar"),
-                        color = "yellow"),
+                        color = "blue"),
                 infoBox("Children In Poverty", format(437000, big.mark = ","),
                         icon = icon("child"),
-                        color = "red"),
-                infoBox("Gap Amount ($ billions)", 6.5, icon = icon("piggy-bank"))
+                        color = "light-blue"),
+                infoBox("Gap Amount ($ billions)", 6.5, icon = icon("piggy-bank"),
+                        color = 'teal')
                 ),
-              hr()
+              hr(),
+              fluidRow(
+                box(
+                  title = 'Poverty by Income',
+                  width = 12,
+                  column(width = 8,
+                         plotOutput('data_spotlight_plot')),
+                  column(width = 4,
+                         # avoid extra tick marks in slider with css
+                         tags$style(type = "text/css", ".irs-grid-pol.small {height: 0px;}"),
+                         sliderInput('data_spotlight_slider', h4('Year'), sep = "",
+                                     animate = TRUE, round = TRUE, step = 1,
+                                     min = 2005, max = 2018, value = 2018)
+                         )
+                  )
+                )
               ),
       ## Data Detail ----
       tabItem(tabName = 'data_detail',
@@ -753,14 +773,12 @@ ui <- dashboardPage(
                 p('Make your selections below to see what poverty in New York looks like for people like ', tags$strong('you'), ' in 2019!'),
                 fluidRow(
                   box(
-                    title = 'Income Distribution (2019)',
+                    title = 'Income Distribution (2018)',
                     width = 9,
                     status = 'primary',
                     tabsetPanel(type = "tabs",
                                 tabPanel("Plot", plotOutput("plot_data_detail")),
-                                tabPanel("Data",
-                                         'Does it make sense to include any data here?'
-                                         ),
+                                tabPanel("PlotAlt", plotOutput('data_detail_plot2')),
                                 tabPanel("Source/Notes",
                                          tags$strong('Source:'),
                                          'American Community Survey Public Use Micro Sample as augmented by NYC Opportunity. U.S. official threshold from U.S. Census Bureau.',
@@ -768,20 +786,29 @@ ui <- dashboardPage(
                                          br(),
                                          tags$strong('Notes:'),
                                          'Numbers in bold indicate a statistically significant change from prior year. U.S. official poverty rates are based on the NYCgov poverty universe and unit of analysis. See Appendix A for details.')
-                    )
+                    ),
+                    code(textOutput("age_range"))
                   ),
                   box(
                     title = "Options",
                     width = 3,
                     status = 'primary',
-                    selectInput("select_data_detail_sex", label = "Sex",
-                                c("Female" = "Female",
-                                  "Male" = "Male")
-                                  ),
-                    selectInput("select_data_detail_age", label = "Age",
-                                c("Under 18" = "Under 18",
-                                  "18-64" = "18-64",
-                                  "65+" = "65+")
+                    sliderInput("data_detail_age_slider", label = "Age + 10",
+                                min = 18, max = 90, value = 37),
+                    # selectInput("data_detail_sex_select", label = "Sex",
+                    #             c("Female" = "Female",
+                    #               "Male" = "Male")
+                    #               ),
+                    selectInput("data_detail_famtype_select", label = "Living Situation",
+                                c('Husband/Wife + child' = 'Husband/Wife + child',
+                                  'Husband/Wife no child' = 'Husband/Wife no child',
+                                  'Single Male + child' = 'Single Male + child',
+                                  'Single Female + child' = 'Single Female + child',
+                                  'Male unit head, no child' = 'Male unit head, no child',
+                                  'Female unit head, no child' = 'Female unit head, no child',
+                                  'Unrelated Indiv w/others' = 'Unrelated Indiv w/others',
+                                  'Unrelated Indiv Alone' = 'Unrelated Indiv Alone'
+                                )
                     ),
                     selectInput("select_data_detail_borough", label = "Borough",
                                 c("Bronx" = "Bronx",
@@ -823,15 +850,15 @@ ui <- dashboardPage(
                              inputId = 'selectize_data_comparison_pop_characteristics',
                              label = 'Sub-Population',
                              choices = c(
-                               'Age' = 'age_categ',
-                               'Borough' = 'boro',
-                               'Disability' = 'dis',
-                               'Educational Attainment' = 'educ_attain',
-                               'Ethnicity' = 'ethnicity',
-                               'Housing Status' = 'ten',
-                               'Sex' = 'sex'
+                               'Age' = 'Age_Categ',
+                               'Borough' = 'Boro',
+                               'Disability' = 'DIS',
+                               'Educational Attainment' = 'EducAttain',
+                               'Ethnicity' = 'Ethnicity',
+                               'Housing Status' = 'TEN',
+                               'Sex' = 'SEX'
                              ),
-                             selected = 'boro',
+                             selected = 'Boro',
                              multiple = TRUE
                            )
                     ),
@@ -875,11 +902,11 @@ ui <- dashboardPage(
 
 # SERVER ----
 server <- function(input, output) {
-  ## Poverty ----
-  global_poverty_rate = read_csv('temp_data/world_bank_poverty.csv')
-  # load cleaned data from clean_data.R (maybe source?)
-  df = read_csv("data/NYCgov_Poverty_Measure_Data_cleaned.csv")
+  # set CI for plots
+  plot_ci = 1.645 # 90%
   
+  ## Load Data ----
+  df = readRDS("data/dataset.RDS")
 
   profile_finances = read_csv('temp_data/monthly_spend.csv')
 
@@ -903,65 +930,79 @@ server <- function(input, output) {
   
   ## Report ----
   
+  # 1.1 Create datatable
+  df_1_1 <- reactive({
+      df %>%
+      filter(year>=input$slider_1_1[1] & year<=input$slider_1_1[2]) %>% # year range
+      select(year, PWGTP, Off_Pov_Stat, NYCgov_Pov_Stat) %>%
+      gather(measure, status, Off_Pov_Stat:NYCgov_Pov_Stat) %>%
+      group_by(year, measure) %>%
+      summarise(
+        percentage = round(sum((PWGTP*status)) / sum(PWGTP) * 100, 2),
+        se = (sqrt((sum((PWGTP*status)/sum(PWGTP)) * (1-sum((PWGTP*status)/sum(PWGTP)))) / (n()-1)))*100
+      )
+  })
+  
   # 1.1 Plot
-  poverty_rates = read_csv('temp_data/poverty_numbers.csv') %>%
-    gather(Year, Value, `2005`:`2019`) #make long
-  
-  poverty_rates[poverty_rates$Measure=='NYCGov Threshold',]$Value = poverty_rates[poverty_rates$Measure=='Official Threshold',]$Value * (rnorm(nrow(poverty_rates[poverty_rates$Measure=='Official Threshold',]), 0, 0.02) + 1.376163)
-  
-  output$plot_1_1_rate <- renderPlotly({
-    poverty_rates %>%
-      filter(Year>=input$slider_1_1[1] & Year<=input$slider_1_1[2]) %>%
-      filter(Measure == 'NYCGov Poverty' | Measure == 'NYCGov Near Poverty' | Measure == 'Official Poverty') %>%
-      
-      plot_ly(x=~Year, y=~Value,
-              type="scatter",color=~Measure, mode="lines+markers")
+  output$plot_1_1_rate <- renderPlot({
+    df_1_1() %>%
+      ggplot(aes(x=year, y=percentage,
+                 colour= measure,
+                 fill = measure)) +
+      geom_line(aes(x=year)) + geom_point() +
+      geom_ribbon(aes(ymin=percentage-plot_ci*se, ymax=percentage+plot_ci*se),
+                  alpha = 0.2, colour = NA) +
+      scale_x_continuous(breaks=unique(df$year)) +
+      labs(#title = paste0("NYCgov Poverty Rates by ", input$select_1_2_options),
+        x = 'Year', y = 'Percentage (%)')   +
+      scale_fill_discrete(name = "Poverty Measure", labels = c("NYCgov", "Official")) +
+      scale_colour_discrete(name = "Poverty Measure", labels = c("NYCgov", "Official")) +
+      theme_minimal() +
+      theme(text=element_text(size=14))
+    # ggplotly() this was giving some weird formatting of the legend
   })
   
   # 1.1 Table
   output$table_1_1_rate <- renderDataTable(
-    poverty_rates %>%
-      filter(Year>=input$slider_1_1[1] & Year<=input$slider_1_1[2]) %>%
-      filter(Measure == 'NYCGov Poverty' | Measure == 'NYCGov Near Poverty' | Measure == 'Official Poverty'),
+    df_1_1(),
     extensions = 'Buttons', 
     options = list(
       dom = 'Bfrtip',
-      # buttons = list(
-      #   list(extend = "csv", text = "CSV", filename = paste('NYCgov_poverty_', str_c(input$slider_1_1, collapse = '-'), '_', Sys.Date(), sep = ''),
-      #        exportOptions = list(
-      #          modifier = list(page = "all")
-      #        )
-      #   ),
-      #   list(extend = "excel", text = "Excel", filename = "data",
-      #        exportOptions = list(
-      #          modifier = list(page = "all")
-      #        )
-      #   )
-      # )
       buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
+      )
     )
-    )
+  
+  # 1.2 Create Datatable
+  df_1_2 <- reactive({
+    if (input$radio_1_2=='family') {
+      df %>%
+        filter(AGEP<65) %>% # avoid fact that official measure has two different rates for above/below 65
+        filter(year>=input$slider_1_2[1] & year<=input$slider_1_2[2]) %>% # year range
+        filter(NP == 4 & FamType_PU == 'Husband/Wife + child') %>%
+        select(year, Off_Threshold, NYCgov_Threshold) %>%
+        distinct(year, .keep_all= TRUE) %>%
+        gather(threshold, amount, Off_Threshold:NYCgov_Threshold)
+    }
+    else{
+      df %>%
+        filter(AGEP<65) %>% # avoid fact that official measure has two different rates for above/below 65
+        filter(year>=input$slider_1_2[1] & year<=input$slider_1_2[2]) %>% # year range
+        filter(NP == 1) %>%
+        select(year, Off_Threshold, NYCgov_Threshold) %>%
+        distinct(year, .keep_all= TRUE) %>%
+        gather(threshold, amount, Off_Threshold:NYCgov_Threshold)
+    }
+  })
   
   # 1.2 Plot
-  poverty_rates = read_csv('temp_data/poverty_numbers.csv') %>%
-    gather(Year, Value, `2005`:`2019`) #make long
-  
-  poverty_rates[poverty_rates$Measure=='NYCGov Threshold',]$Value = poverty_rates[poverty_rates$Measure=='Official Threshold',]$Value * (rnorm(nrow(poverty_rates[poverty_rates$Measure=='Official Threshold',]), 0, 0.02) + 1.376163)
-  
   output$plot_1_2_threshold <- renderPlotly({
-    poverty_rates %>%
-      filter(Year>=input$slider_1_2[1] & Year<=input$slider_1_2[2]) %>%
-      filter(Measure == 'NYCGov Threshold' | Measure == 'Official Threshold') %>%
-      
-      plot_ly(x=~Year, y=~Value,
-              type="scatter",color=~Measure, mode="lines+markers")
+    plot_ly(df_1_2(), x=~year, y=~amount,
+            type="scatter",color=~threshold, mode="lines+markers")
   })
   
   # 1.2 Table
   output$table_1_2_threshold <- renderDataTable(
-    poverty_rates %>%
-      filter(Year>=input$slider_1_2[1] & Year<=input$slider_1_2[2]) %>%
-      filter(Measure == 'NYCGov Threshold' | Measure == 'Official Threshold'),
+    df_1_2(),
     extensions = 'Buttons', options = list(
       dom = 'Bfrtip',
       buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
@@ -972,10 +1013,10 @@ server <- function(input, output) {
   section_1_2_fig_3to10 = reactive({
     if (req(input$select_1_2_options) == 'ethnicity_sex'){
       df %>%
-        group_by(year, sex, ethnicity) %>%
+        group_by(year, SEX, Ethnicity) %>%
         summarise(
-          cat_perc = round(sum((pwgtp*nyc_gov_in_pov)) / sum(pwgtp) * 100, 2),
-          se = (sqrt((sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)) * (1-sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)))) / (n()-1)))*100
+          cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat)) / sum(PWGTP) * 100, 2),
+          se = (sqrt((sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)))) / (n()-1)))*100
         )
     }
     else{
@@ -983,9 +1024,9 @@ server <- function(input, output) {
         group_by(!!!syms(append('year', input$select_1_2_options))) %>%
         summarise(
           # category percentage
-          cat_perc = round(sum((pwgtp*nyc_gov_in_pov)) / sum(pwgtp) * 100, 2),
+          cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat)) / sum(PWGTP) * 100, 2),
           # standard error
-          se = (sqrt((sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)) * (1-sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)))) / (n()-1)))*100
+          se = (sqrt((sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)))) / (n()-1)))*100
         )
     }
   })
@@ -995,19 +1036,19 @@ server <- function(input, output) {
   output$plot_1_2_fig_3to10 <- renderPlot({
     if (req(input$select_1_2_options) == 'ethnicity_sex'){
       df %>%
-        group_by(year, sex, ethnicity) %>%
+        group_by(year, SEX, Ethnicity) %>%
         summarise(
-          cat_perc = round(sum((pwgtp*nyc_gov_in_pov)) / sum(pwgtp) * 100, 2),
-          se = (sqrt((sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)) * (1-sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)))) / (n()-1)))*100
+          cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat)) / sum(PWGTP) * 100, 2),
+          se = (sqrt((sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)))) / (n()-1)))*100
         ) %>%
-        ggplot(aes(x=year, y=cat_perc, colour=ethnicity, fill=ethnicity)) + 
+        ggplot(aes(x=year, y=cat_perc, colour=Ethnicity, fill=Ethnicity)) + 
         geom_line(aes(x=year)) + geom_point() +
-        geom_ribbon(aes(ymin=cat_perc-1.96*se, ymax=cat_perc+1.96*se), alpha = 0.2, colour = NA) +
+        geom_ribbon(aes(ymin=cat_perc-plot_ci*se, ymax=cat_perc+plot_ci*se), alpha = 0.2, colour = NA) +
         scale_x_continuous(breaks=unique(df$year)) +
         ggtitle(paste0("Poverty Rates, Race and Ethnicity by Gender")) +
         scale_color_brewer(palette="Paired") +
         theme_minimal() +
-        facet_wrap(~sex, ncol = 1)
+        facet_wrap(~SEX, ncol = 1)
         
     }
     else{
@@ -1015,15 +1056,15 @@ server <- function(input, output) {
         group_by(!!!syms(append('year', input$select_1_2_options))) %>%
         summarise(
           # category percentage
-          cat_perc = round(sum((pwgtp*nyc_gov_in_pov)) / sum(pwgtp) * 100, 2),
+          cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat)) / sum(PWGTP) * 100, 2),
           # standard error
-          se = (sqrt((sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)) * (1-sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)))) / (n()-1)))*100
+          se = (sqrt((sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)))) / (n()-1)))*100
         ) %>%
         ggplot(aes(x=year, y=cat_perc,
                    colour=!!sym(input$select_1_2_options),
                    fill = !!sym(input$select_1_2_options))) +
         geom_line(aes(x=year)) + geom_point() +
-        geom_ribbon(aes(ymin=cat_perc-1.96*se, ymax=cat_perc+1.96*se),
+        geom_ribbon(aes(ymin=cat_perc-plot_ci*se, ymax=cat_perc+plot_ci*se),
                     alpha = 0.2, colour = NA) +
         scale_x_continuous(breaks=unique(df$year)) +
         labs(#title = paste0("NYCgov Poverty Rates by ", input$select_1_2_options),
@@ -1043,22 +1084,56 @@ server <- function(input, output) {
   )
   
   ## Data ----
+
+  ## Data Spotlight ----
+  spotlight_data = reactive({
+    df %>%
+      filter(year == input$data_spotlight_slider)
+  })
+  color_palette_blues = c('#6b76c7', '#7db0ea', '#3059c9', '#38aad6', '#9ffffd')
+  ## Plot
+  output$data_spotlight_plot <- renderPlot({
+    ggplot(spotlight_data(), aes(x = NYCgov_Income, fill = NYCgov_Pov_Stat)) + 
+    # geom_density(alpha = 0.5) +
+    geom_histogram(alpha = 0.5, position = 'identity', bins = 100) +
+    scale_fill_manual(name = "Status", labels = c("Not in Poverty", "In Poverty"),
+                      values=color_palette_blues[1:2]) +
+    scale_x_continuous(label=scales::comma, limits=c(0, 200000)) +
+    labs(x = 'Income ($)', y = 'Proportion') +
+    # scale_fill_discrete(name = "Status", labels = c("Not in Poverty", "In Poverty")) +
+    #  scale_fill_brewer(guide="none") +
+    theme_minimal() + 
+    theme(axis.text.y  = element_blank())
+  })
   
   ## Data Detail ----
+  # Text for age slider
+  output$age_range <- renderText({
+    paste0(as.character(input$data_detail_age_slider), ' - ',
+           as.character(input$data_detail_age_slider + 10), ' year old ',
+           input$data_detail_famtype_select, ' living in ',
+           input$select_data_detail_borough, ' with ', input$select_data_detail_education)
+  })
+  # KDE Plot
   output$plot_data_detail <- renderPlot({
-    poverty = 35044
+
+    df_detail = df %>%
+      filter(year == 2018) %>%
+      filter(FamType_PU == input$data_detail_famtype_select) %>%
+      # filter(SEX == input$data_detail_sex_select) %>%
+      filter(AGEP >= input$data_detail_age_slider & AGEP <= (input$data_detail_age_slider + 10)) %>%
+      filter(Boro == input$select_data_detail_borough) %>%
+      filter(EducAttain == input$select_data_detail_education) 
+    
+    # what is the poverty threshold for this group
+    # add number of kids?
+    poverty = mean(df_detail$NYCgov_Threshold)
+    print(poverty)
     near_poverty = poverty * 1.5
     
-    incomes = df %>%
-      filter(year == 2018) %>%
-      filter(sex == input$select_data_detail_sex) %>%
-      filter(age_categ == input$select_data_detail_age) %>%
-      filter(boro == input$select_data_detail_borough) %>%
-      filter(educ_attain == input$select_data_detail_education) %>%
-      select('nyc_gov_income')
+    incomes = df_detail %>%
+      pull('NYCgov_Income')
     
-    # turn into vector
-    incomes = incomes[[1]]
     # get rid of negative income values
     incomes[incomes<0] = 0
     
@@ -1095,6 +1170,9 @@ server <- function(input, output) {
       theme(axis.text.y = element_blank(), text=element_text(size=14))
   })
   
+  # Alt plot
+  
+  
   ## Data Comparison ----
   # color palette: https://coolors.co/d9ed92-b5e48c-99d98c-76c893-52b69a-34a0a4-168aad-1a759f-1e6091-184e77
   color_palette = c('#d9ed92', '#b5e48c', '#99d98c', '#76c893', '#52b69a',
@@ -1109,17 +1187,17 @@ server <- function(input, output) {
     dt = filter(df, year == input$checkbox_data_comparison_year) %>%
       # this is making it take the list as var names (below)
       group_by(!!!syms(append('year', input$selectize_data_comparison_pop_characteristics))) %>%
-      summarise(cat_perc = round(sum((pwgtp*nyc_gov_in_pov)) / sum(pwgtp) * 100, 2),
-                citywide_perc = round( (sum(pwgtp*nyc_gov_in_pov) / mean(population)) * 100, 2),
-                n_pov_weighted = sum((pwgtp*nyc_gov_in_pov)),
-                # n_sample = length(pwgtp),
-                # n_weighted = sum(pwgtp),
+      summarise(cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat)) / sum(PWGTP) * 100, 2),
+                citywide_perc = round( (sum(PWGTP*NYCgov_Pov_Stat) / mean(population)) * 100, 2),
+                n_pov_weighted = sum((PWGTP*NYCgov_Pov_Stat)),
+                # n_sample = length(PWGTP),
+                # n_weighted = sum(PWGTP),
                 # se calc. based on binomial property for variance (p * 1-p)
                 ## https://www.sapling.com/6183888/calculate-sampling-error-percentages
-                # se = round((sqrt((sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)) * (1-sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)))) / (n()-1)))*100, 2),
+                # se = round((sqrt((sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)))) / (n()-1)))*100, 2),
                 ## coefficient of variation (https://influentialpoints.com/Training/coefficient_of_variation_of_a_mean.htm)
-                cv = round((100*sd(nyc_gov_in_pov)) / (mean(nyc_gov_in_pov) * sqrt(n())), 2),
-                ci95 = round(qnorm(0.975) * (sqrt((sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)) * (1-sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)))) / (n()-1)))*100, 2)
+                cv = round((100*sd(NYCgov_Pov_Stat)) / (mean(NYCgov_Pov_Stat) * sqrt(n())), 2),
+                ci90 = round(qnorm(0.95) * (sqrt((sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)))) / (n()-1)))*100, 2)
       ) %>%
       drop_na()
   })
@@ -1133,17 +1211,17 @@ server <- function(input, output) {
     dt = filter(df, year == input$checkbox_data_comparison_year) %>%
       # this is making it take the list as var names (below)
       group_by(!!!syms(append('year', input$selectize_data_comparison_pop_characteristics))) %>%
-      summarise(cat_perc = round(sum((pwgtp*nyc_gov_in_pov)) / sum(pwgtp) * 100, 2),
-                citywide_perc = round( (sum(pwgtp*nyc_gov_in_pov) / mean(population)) * 100, 2),
-                n_pov_weighted = sum((pwgtp*nyc_gov_in_pov)),
-                # n_sample = length(pwgtp),
-                # n_weighted = sum(pwgtp),
+      summarise(cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat)) / sum(PWGTP) * 100, 2),
+                citywide_perc = round( (sum(PWGTP*NYCgov_Pov_Stat) / mean(population)) * 100, 2),
+                n_pov_weighted = sum((PWGTP*NYCgov_Pov_Stat)),
+                # n_sample = length(PWGTP),
+                # n_weighted = sum(PWGTP),
                 # se calc. based on binomial property for variance (p * 1-p)
                 ## https://www.sapling.com/6183888/calculate-sampling-error-percentages
-                # se = round((sqrt((sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)) * (1-sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)))) / (n()-1)))*100, 2),
+                # se = round((sqrt((sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)))) / (n()-1)))*100, 2),
                 ## coefficient of variation (https://influentialpoints.com/Training/coefficient_of_variation_of_a_mean.htm)
-                cv = round((100*sd(nyc_gov_in_pov)) / (mean(nyc_gov_in_pov) * sqrt(n())), 2),
-                ci95 = round(qnorm(0.975) * (sqrt((sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)) * (1-sum((pwgtp*nyc_gov_in_pov)/sum(pwgtp)))) / (n()-1)))*100, 2)
+                cv = round((100*sd(NYCgov_Pov_Stat)) / (mean(NYCgov_Pov_Stat) * sqrt(n())), 2),
+                ci90 = round(qnorm(0.95) * (sqrt((sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)))) / (n()-1)))*100, 2)
       ) %>%
       drop_na() %>%
       datatable(extensions = list('Buttons'),
@@ -1171,7 +1249,6 @@ server <- function(input, output) {
                   backgroundSize = '98% 88%',
                   backgroundRepeat = 'no-repeat',
                   backgroundPosition = 'center') %>%
-
       formatStyle('CV',
                   target = 'row',
                   backgroundColor = styleInterval(15, c('', 'gray'))) %>%
@@ -1179,37 +1256,26 @@ server <- function(input, output) {
                   backgroundColor = styleEqual(unique(na.omit(df$year)), brewer.pal(n = length(unique(na.omit(df$year))), name = 'Blues')))
     
     # color columns super hack style
-    # color_cols <- function(selection_name, datatable){
-    #   if (is.element(selection_name, input$selectize_data_comparison_pop_characteristics)){
-    #     print('got here')
-    #     datatable = datatable %>%
-    #       formatStyle(selection_name,
-    #                   backgroundColor = styleEqual(sort(unique(df[selection_name])), color_palette[1:length(unique(df[selection_name]))]))}
-    #   return(datatable)
-    # }
-    # dt = color_cols('boro', dt)
-    
-
-    if ('boro' %in% input$selectize_data_comparison_pop_characteristics){
+    if ('Boro' %in% input$selectize_data_comparison_pop_characteristics){
       dt = dt %>% formatStyle('boro',
                               backgroundColor = styleEqual(sort(unique(na.omit(df$boro))), color_palette[1:length(unique(na.omit(df$boro)))]))}
-    if ('age_categ' %in% input$selectize_data_comparison_pop_characteristics){
-      dt = dt %>% formatStyle('age_categ',
+    if ('AgeCateg' %in% input$selectize_data_comparison_pop_characteristics){
+      dt = dt %>% formatStyle('AgeCateg',
                               backgroundColor = styleEqual(sort(unique(na.omit(df$age_categ))), color_palette[1:length(unique(na.omit(df$age_categ)))]))}
-    if ('educ_attain' %in% input$selectize_data_comparison_pop_characteristics){
-      dt = dt %>% formatStyle('educ_attain',
-                              backgroundColor = styleEqual(sort(unique(na.omit(df$educ_attain))), color_palette[1:length(unique(na.omit(df$educ_attain)))]))}
-    if ('sex' %in% input$selectize_data_comparison_pop_characteristics){
-      dt = dt %>% formatStyle('sex',
+    if ('EducAttain' %in% input$selectize_data_comparison_pop_characteristics){
+      dt = dt %>% formatStyle('EducAttain',
+                              backgroundColor = styleEqual(sort(unique(na.omit(df$EducAttain))), color_palette[1:length(unique(na.omit(df$EducAttain)))]))}
+    if ('SEX' %in% input$selectize_data_comparison_pop_characteristics){
+      dt = dt %>% formatStyle('SEX',
                               backgroundColor = styleEqual(sort(unique(na.omit(df$sex))), color_palette[1:length(unique(na.omit(df$sex)))]))}
-    if ('ethnicity' %in% input$selectize_data_comparison_pop_characteristics){
-      dt = dt %>% formatStyle('ethnicity',
+    if ('Ethnicity' %in% input$selectize_data_comparison_pop_characteristics){
+      dt = dt %>% formatStyle('Ethnicity',
                               backgroundColor = styleEqual(sort(unique(na.omit(df$ethnicity))), color_palette[1:length(unique(na.omit(df$ethnicity)))]))}
-    if ('dis' %in% input$selectize_data_comparison_pop_characteristics){
-      dt = dt %>% formatStyle('dis',
+    if ('DIS' %in% input$selectize_data_comparison_pop_characteristics){
+      dt = dt %>% formatStyle('DIS',
                               backgroundColor = styleEqual(sort(unique(na.omit(df$dis))), color_palette[1:length(unique(na.omit(df$dis)))]))}
-    if ('ten' %in% input$selectize_data_comparison_pop_characteristics){
-      dt = dt %>% formatStyle('ten',
+    if ('TEN' %in% input$selectize_data_comparison_pop_characteristics){
+      dt = dt %>% formatStyle('TEN',
                               backgroundColor = styleEqual(sort(unique(na.omit(df$ten))), color_palette[1:length(unique(na.omit(df$ten)))]))}
     dt
   })

@@ -1,7 +1,7 @@
 ---
 title: "Data Munging"
 author: "Daniel J Wilson for PRU"
-date: "8/2/2021"
+date: "8/16/2021"
 output: html_document
 ---
 
@@ -13,136 +13,311 @@ knitr::opts_chunk$set(echo = TRUE)
 
 The goal of this document is to provide a clear overview to how data is imported and cleaned for use in the `R Shiny` PRU Web App. The goal is that this can be updated each year to add the latest data with minimal work.
 
-## Import libraries
+## Load Libraries
 
-```{r imports}
+```{r imports, message=FALSE}
 library(tidyverse)
+library(googlesheets4) # for loading google sheet info
+library(stringr)
 ```
 
-## Collect Import Files
+## Select Files to Import
 
 First make a list of all files that we need to load.
 
 In this case we are specifying the directory where the files are located and then telling it to make a list of all `.csv` files in this directory.
 
-```{r file-list}
+```{r file-list, echo=FALSE}
 # set the path from which the files will be read from
-path = '../../../Data/full_data/'
+path_open_data = '/Users/djw/Documents/pCloud_synced/Academics/Projects/2021_NYC_PRU/Data/open_data/'
+path_full = '../../../Data/full_data/'
 
 # create a list of the files from your target directory
-file_list <- list.files(path = path, pattern = '\\.csv', ignore.case = TRUE)
+open_file_list <- list.files(path = path_open_data, pattern = '\\.csv', ignore.case = TRUE)
+full_file_list <- list.files(path = path_full, pattern = '\\.csv', ignore.case = TRUE)
+
+# find what years are contained
+# use regular expression that will select digits from file names
+regexp <- "[[:digit:]]+"
+
+# process string
+open_years = as.numeric(str_extract(open_file_list, regexp))
+full_years = as.numeric(str_extract(full_file_list, regexp))
+
+# test if the years are the same
+test_years = identical(sort(open_years), sort(full_years))
+print(paste0('Same years in both datasets --> ', test_years))
+# print dataframe of years
+year_range = max(open_years, full_years):min(open_years, full_years)
+open_years_exist = ifelse(year_range %in% open_years, 1, NA) 
+full_years_exist = ifelse(year_range %in% full_years, 1, NA) 
+  
+years_present = data.frame(years = year_range, open_years = open_years_exist, full_years = full_years_exist)
+print(years_present)
 ```
 
-## Clean Data
+## Select Columns
+
+We are drawing from **two** dataframes.
+
+The [NYC OpenData](https://data.cityofnewyork.us/browse?q=nycgov+poverty+measure&sortBy=alpha&utf8=%E2%9C%93) dataframes contain a reduced and pre-processed set of indicators. Most of the data we need is here.
+
+We also augment this data with columns of interest from the **FULL** dataframe which is much more detailed with over 1000 columns. For example, if we want to create a map using the [Public Use Microdata Areas](https://www.census.gov/programs-surveys/geography/guidance/geo-areas/pumas.html) (PUMAs) we would select the corresponding colum (`PUMA`) from this dataframe.
+
+The current selections from both dataframes are in [this Google Sheet](https://docs.google.com/spreadsheets/d/1ndZtYpCjD4CCIyGU2chJjw6yMPr4PDQY6q8OJeoYpso/edit?usp=sharing) which lists the column *Names* and *Descriptions*, along with coding information a column which specifies which dataframe they belong to.
+
+```{r select-columns, echo=FALSE, message=FALSE}
+# read in google doc, specifying sheet
+options(gargle_oauth_email = TRUE)
+column_doc = read_sheet("https://docs.google.com/spreadsheets/d/1ndZtYpCjD4CCIyGU2chJjw6yMPr4PDQY6q8OJeoYpso/edit?usp=sharing", sheet = 'indicators')
+
+# make column list based on the df they will be pulled from (open vs. full)
+column_slx_open = column_doc %>%
+  filter(df == 'open_data' | df == 'both') %>%
+  pull(column_name)
+
+column_slx_full = column_doc %>%
+  filter(df == 'full_df' | df == 'both') %>%
+  pull(column_name)
+```
+
+## Load and Subset Data
 
 In this step we will:
 
-1. take a small subset of the original dataframes according to the information we will present.
-    - [This](https://docs.google.com/spreadsheets/d/1ndZtYpCjD4CCIyGU2chJjw6yMPr4PDQY6q8OJeoYpso/edit?usp=sharing) is a file that lists the column *Names* and *Descriptions*, along with coding information.
+1. Loop through list of dataframes by year
+2. On each loop load the `open_data` dataframe and select the columns using `column_slx_open`
+3. Repeat the same with the `full_df`
+4. Join the data from `full_df` with `open_data` based on the `SERIALNO` and `SPORDER` columns
+5. Add a year column to the dataframe
+6. Append each year to the aggregated dataframe we are creating
 
-```{r long_df, echo=FALSE}
-#initiate a blank data frame, each iteration of the loop will append the data from the given file to this variable
+```{r long_df, echo=FALSE, message=FALSE, warning=FALSE}
+# initiate a blank data frame, each iteration of the loop will append a year's data to this
 dataset <- data.frame()
 
-for (i in 1:length(file_list)){
+# since most indicators are in open_years df we use these years as the baseline
+for (year in open_years){
+  print('-----------------------')
+  print(paste0('Processing ', as.character(year), '...'))
+  
+  # find year in file list
+  index = str_which(open_file_list, as.character(year))
   # load in each individual year
-  df = read_csv(paste0(path, file_list[i]))
+  df_open = read_csv(paste0(path_open_data, open_file_list[index]))
+  
+  # test for missing columns
+  missing_columns = column_slx_open[which(!column_slx_open %in% colnames(df_open))]
+  if (length(missing_columns>0)) {
+    print(paste0('The following columns are not in Open datafile ', as.character(year), ':'))
+    print(missing_columns)
+  }
+  
+  # change coding of NYCgov_Pov_Stat
+  df_open$NYCgov_Pov_Stat[df_open$NYCgov_Pov_Stat==2] <- 0
+  df_open$Off_Pov_Stat[df_open$Off_Pov_Stat==2] <- 0
+  
+  # vector with columns that are present
+  column_slx = column_slx_open[which(column_slx_open %in% colnames(df_open))]
   
   # select only columns of interest
+  df_open = df_open[column_slx]
   
-  df_c = df[c('PWGTP', 'AgeCateg', 'SEX', 'Boro', 'Ethnicity',
-              'TEN', 'CitizenStatus', 'EducAttain', 'FTPTWork',
-              'FamType_PU', 'DIS', 'Off_Pov_Stat', 'NYCgov_Pov_Stat',
-              'NYCgov_Income')]
+  # Find categorical columns
+  categorical_cols = column_doc %>%
+    filter(categorical == 'yes' & column_name %in% column_slx) %>%
+    pull(column_name)
   
-  ##### 1.3 Specify data types #####
-  
-  categorical_cols = c('AgeCateg', 'SEX', 'Boro', 'Ethnicity',
-                       'TEN', 'CitizenStatus', 'EducAttain', 'FTPTWork',
-                       'FamType_PU', 'DIS', 'Off_Pov_Stat', 'NYCgov_Pov_Stat')
-  
-  df_c = df_c %>%
-    mutate_at(categorical_cols, factor)
-  
-  str(df_c)
-  
-  ##### 1.4 Rename #####
-  # rename the columns to standardize formatting
-  # convert to snake case
-  df_c = df_c %>%
-    janitor::clean_names(abbreviations = c("NYC"))
-  
+  # convert columns to factors
+  df_open = df_open %>%
+    mutate(across(all_of(categorical_cols), as_factor))
+    
   # rename the factor levels for legibility
-  sort(names(Filter(is.factor, df_c)))
-  
-  
-  
-  df_c = df_c %>%
-    mutate(age_categ = recode(age_categ,
-                              `1` = 'Under 18',
-                              `2` = '18-64',
-                              `3` = '65+')) %>%
-    mutate(boro = recode(boro,
+  # use recode_factor to change the order of levels to match the order of replacements
+  # would be nice to do automate this with a function
+  df_open = df_open %>%
+    mutate(AgeCateg = recode(AgeCateg,
+                             `1` = 'Under 18',
+                             `2` = '18-64',
+                             `3` = '65+')) %>%
+    mutate(Boro = recode(Boro,
                          `1` = 'Bronx',
                          `2` = 'Brooklyn',
                          `3` = 'Manhattan',
                          `4` = 'Queens',
                          `5` = 'Staten Island')) %>%
-    mutate(citizen_status = recode(citizen_status,
-                                   `1` = 'Citizen (Birth)',
-                                   `2` = 'Citizen (Naturalized)',
-                                   `3` = 'Not a Citizen')) %>%
-    mutate(dis = recode(dis,
-                        `1` = 'With disability',
-                        `2` = 'No disability')) %>%
-    mutate(educ_attain = recode(educ_attain,
-                                `1` = '< High School',
-                                `2` = 'High School Degree',
-                                `3` = 'Some College',
-                                `4` = 'Bachelor Degree+')) %>%
-    mutate(ethnicity = recode(ethnicity,
+    mutate(CitizenStatus = recode(CitizenStatus,
+                                  `1` = 'Citizen (Birth)',
+                                  `2` = 'Citizen (Naturalized)',
+                                  `3` = 'Not a Citizen')) %>%
+    mutate(EducAttain = recode(EducAttain,
+                               `1` = '< High School',
+                               `2` = 'High School Degree',
+                               `3` = 'Some College',
+                               `4` = 'Bachelor Degree+')) %>%
+    mutate(Ethnicity = recode(Ethnicity,
                               `1` = 'White (non-hispanic)',
                               `2` = 'Black (non-hispanic)',
                               `3` = 'Asian (non-hispanic)',
                               `4` = 'Hispanic (any race)',
                               `5` = 'Other Race/Ethnic Group')) %>%
-    mutate(fam_type_pu = recode(fam_type_pu,
-                                `1` = 'Husband/Wife + child ',
-                                `2` = 'Husband/Wife no child ',
-                                `3` = 'Single Male + child ',
-                                `4` = 'Single Female + child ',
-                                `5` = 'Male unit head, no child ',
-                                `6` = 'Female unit head, no child ',
-                                `7` = 'Unrelated Indiv w/others 8 Unrelated Indiv Alone')) %>%
-    mutate(ftpt_work = recode(ftpt_work,
-                              `1` = 'Full Time Year Round',
-                              `2` = 'Less than Full Time Year Round',
-                              `3` = 'No Work')) %>%
-    mutate(sex = recode(sex,
+    mutate(FamType_PU = recode(FamType_PU,
+                               `1` = 'Husband/Wife + child',
+                               `2` = 'Husband/Wife no child',
+                               `3` = 'Single Male + child',
+                               `4` = 'Single Female + child',
+                               `5` = 'Male unit head, no child',
+                               `6` = 'Female unit head, no child',
+                               `7` = 'Unrelated Indiv w/others',
+                               `8` = 'Unrelated Indiv Alone'
+                               )) %>%
+    mutate(FTPTWork = recode(FTPTWork,
+                             `1` = 'Full Time Year Round',
+                             `2` = 'Less than Full Time Year Round',
+                             `3` = 'No Work')) %>%
+    {if ('DIS' %in% column_slx) mutate(., DIS = recode(DIS,
+                                                       `1` = 'With disability', 
+                                                       `2` = 'No disability')) else . } %>%
+    {if ('HousingStatus' %in% column_slx) mutate(., HousingStatus = recode(HousingStatus,
+                                                                           `1` = 'Renter - Public Housing',
+                                                                           `2` = 'Renter - Mitchell Lama Rental', 
+                                                                           `3` = 'Renter - Tenant-Based Subsidy', 
+                                                                           `4` = 'Renter - Rent Regulated', 
+                                                                           `5` = 'Renter - Other Regulated', 
+                                                                           `6` = 'Renter - Market Rate', 
+                                                                           `7` = 'Renter - No Cash Rent', 
+                                                                           `8` = 'Owner - Owned Free & Clear', 
+                                                                           `9` = 'Owner - Paying Mortgage')) else .} %>%
+    mutate(Povunit_Rel = recode(Povunit_Rel,
+                        `1` = 'Head',
+                        `2` = 'Spouse/Partner',
+                        `3` = 'Child',
+                        `4` = 'Other')) %>%
+    mutate(SEX = recode(SEX,
                         `1` = 'Male',
                         `2` = 'Female')) %>%
-    mutate(ten = recode(ten,
+    mutate(TEN = recode(TEN,
                         `1` = 'Owned - mortgage',
                         `2` = 'Owned - free and clear',
                         `3` = 'Rented',
-                        `4` = 'Occupied without payment of rent'))
+                        `4` = 'Occupied without payment of rent')) %>%
+    mutate(TotalWorkHrs_PU = recode(TotalWorkHrs_PU,
+                        `1` =  '3500+ Hrs (Two Full-Time, Year-Round Workers)',
+                        `2` =  '> 2340 & < 3500 Hrs (One Full-Time, Year-Round, One Part-Time Worker)',
+                        `3` =  '>= 1750 & <= 2340 Hrs (One Full-Time, Year-Round Worker)',
+                        `4` =  '< 1750 Hrs (Less than One Full-Time, Year-Round Worker)',
+                        `5` =  'No Hrs Worked'))
   
-  ##### 1.5 Add computed columns #####
-  # dummy code official and NYCgov poverty measures
-  # doing manually for clarity - could also use fastDummies library
-  df_c$nyc_gov_in_pov <- ifelse(df_c$nyc_gov_pov_stat == 1, 1, 0)
-  df_c$nyc_off_in_pov <- ifelse(df_c$off_pov_stat == 1, 1, 0)
+  ##### 1.4 Add Columns from df_full ----
+  if (any(str_detect(full_file_list, as.character(year)))){
+    # find year in file list
+    index = str_which(full_file_list, as.character(year))
+    # load in each individual year
+    df_full = read_csv(paste0(path_full, full_file_list[index]))
+    
+    # test for missing columns
+    missing_columns = column_slx_full[which(!column_slx_full %in% colnames(df_full))]
+    if (length(missing_columns>0)) {
+      print(paste0('The following columns are not in the Full datafile ', as.character(year), ':\n'))
+      print(missing_columns)
+    }
+  
+    # vector with columns that are present
+    column_slx = column_slx_full[which(column_slx_full %in% colnames(df_full))]
+    
+    # select only columns of interest
+    df_full = df_full[column_slx]
+    
+    # remove extra digits in NAICSP
+    df_full$NAICSP = as.numeric(substr(df_full$NAICSP, 1, 2))
+    # load in sector codes from google doc
+    # read in google doc, specifying sheet
+    sectors = read_sheet("https://docs.google.com/spreadsheets/d/1ndZtYpCjD4CCIyGU2chJjw6yMPr4PDQY6q8OJeoYpso/edit?usp=sharing", sheet = 'NAICS Sectors')
+    sector_codes = pull(sectors, Sector)
+    # remove values that are not in our dictionary
+    df_full$NAICSP = ifelse(df_full$NAICSP %in% sector_codes, as.character(df_full$NAICSP), NA)
+    
+    # Find categorical columns
+    categorical_cols = column_doc %>%
+      filter(categorical == 'yes' & column_name %in% column_slx) %>%
+      pull(column_name)
+    
+    # convert columns to factors
+    df_full = df_full %>%
+      mutate(across(all_of(categorical_cols), as_factor))
+      
+    # rename the factor levels for legibility
+    # use recode_factor to change the order of levels to match the order of replacements
+    # would be nice to do automate this with a function
+    df_full = df_full %>%
+      mutate(NAICSP = recode(NAICSP,
+                             `11`	= 'Agriculture, Forestry, Fishing and Hunting (not covered in economic census)',
+                             `21`	= 'Mining, Quarrying, and Oil and Gas Extraction',
+                             `22`	= 'Utilities',
+                             `23`	= 'Construction',
+                             `31`	= 'Manufacturing',
+                             `32`	= 'Manufacturing',
+                             `33`	= 'Manufacturing',
+                             `42`	= 'Wholesale Trade',
+                             `44`	= 'Retail Trade',
+                             `45`	= 'Retail Trade',
+                             `48`	= 'Transportation and Warehousing',
+                             `49`	= 'Transportation and Warehousing',
+                             `51`	= 'Information',
+                             `52`	= 'Finance and Insurance',
+                             `53`	= 'Real Estate and Rental and Leasing',
+                             `54`	= 'Professional, Scientific, and Technical Services',
+                             `55`	= 'Management of Companies and Enterprises',
+                             `56`	= 'Administrative and Support and Waste Management and Remediation Services',
+                             `61`	= 'Educational Services',
+                             `62`	= 'Health Care and Social Assistance',
+                             `71`	= 'Arts, Entertainment, and Recreation',
+                             `72`	= 'Accommodation and Food Services',
+                             `81`	= 'Other Services (except Public Administration)',
+                             `92`	= 'Public Administration (not covered in economic census)'))
+    
+    # merge with df_open
+    df_open <- merge(df_open, df_full, by=c("SERIALNO","SPORDER"))
+  }
+  
+  else{
+    print(paste0(as.character(year), ' is not present in the FULL dataframe.'))
+  }
   
   ##### 1.6 Add Year ----
-  df_c$year = as.numeric(paste0('20', substr(strsplit(file_list[i], '20')[[1]][2], 1,2)))
+  df_open$year = year
   
   ##### 1.7 Add Population ----
-  df_c$population = sum(df_c$pwgtp)
+  df_open$population = sum(df_open$PWGTP)
   
   # append data
-  dataset <- rbind(dataset, df_c) #for each iteration, bind the new data to the building dataset
+  dataset <- bind_rows(dataset, df_open) #for each iteration, bind the new data to the building dataset
 }
+```
+## Save
+Save full `dataset` with all years to the `data` folder in the project.
 
+```{r save, echo=FALSE}
+# write.csv(dataset, file = 'data/dataset.csv')
+# save as R file so can store factor structure
+saveRDS(dataset, file = 'data/dataset.RDS') 
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Odd Values
+
+A few notes about weird values...
+
+### `NAICS`
+
+Missing all values for years prior to 2015.
+
+In 2015 and 2016 many rows are coded with invalid coding (e.g. lots of 1s and also 15, 16, 17, 18, 19, 20, 67, etc.)
+
+2017 and 2018 seem to be correct with either named industries or `NA`s.
+
+```{r echo=FALSE}
+print('NAICS data')
+dataset %>% group_by(year) %>%
+  summarise(job_count = length(which(!is.na(NAICSP)))) %>%
+  print()
+```

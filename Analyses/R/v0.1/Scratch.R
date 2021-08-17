@@ -1,3 +1,55 @@
+library(shiny)
+library(shinydashboard)
+##
+ui <- shinyUI({
+  sidebarPanel(
+    
+    htmlOutput("brand_selector"),
+    htmlOutput("candy_selector"))
+  
+})
+##
+server <- shinyServer(function(input, output) {
+  candyData <- read.table(
+    text = "Brand       Candy
+    Nestle      100Grand
+    Netle       Butterfinger
+    Nestle      Crunch
+    Hershey's   KitKat
+    Hershey's   Reeses
+    Hershey's   Mounds
+    Mars        Snickers
+    Mars        Twix
+    Mars        M&Ms",
+    header = TRUE,
+    stringsAsFactors = FALSE)
+  
+  output$brand_selector <- renderUI({
+    
+    selectInput(
+      inputId = "brand", 
+      label = "Brand:",
+      choices = as.character(unique(candyData$Brand)),
+      selected = "Nestle")
+    
+  })
+  
+  output$candy_selector <- renderUI({
+    
+    available <- candyData[candyData$Brand == input$brand, "Candy"]
+    
+    selectInput(
+      inputId = "candy", 
+      label = "Candy:",
+      choices = unique(available),
+      selected = unique(available)[1])
+    
+  })
+  
+})
+##
+shinyApp(ui = ui, server = server)
+
 ############### BUTTON #####
 header <- dashboardHeader(title = "MRO Dash")
 sidebar <- dashboardSidebar(actionButton("downloadBT", "Downloads", icon = icon("download")))
