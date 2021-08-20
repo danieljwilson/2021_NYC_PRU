@@ -1,6 +1,187 @@
-library(shiny)
-library(shinydashboard)
-##
+# nycounties <- geojsonio::geojson_read("json/nycounties.geojson", what = "sp")
+library(tidyverse)
+library(geojsonsf)
+library(sf)
+library(viridis)
+library(RColorBrewer)
+library(leaflet)
+
+### NYC POVERTY DATA
+label_info = 'Ethnicity'
+years = c(2018)
+
+pov_data1 = dataset %>%
+  filter(year>=years & year<=years) %>%
+  group_by(PUMA) %>%
+  summarise(pov_rate = round(sum(PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)*100, 1),
+            pop = sum(PWGTP)) 
+
+pov_data2 = dataset %>%
+  filter(year>=years & year<=years) %>%
+  group_by(PUMA, !!sym(label_info)) %>%
+  summarise(pov_rate = round(sum(PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)*100, 1),
+            pop = sum(PWGTP)) %>%
+  pivot_wider(names_from = Ethnicity, values_from = c('pov_rate', 'pop'))
+#join dfs
+pov_data = inner_join(pov_data1, pov_data2, by = 'PUMA')
+
+pov_data %>%
+  select(starts_with('pop_'))/pov_data$pop * 100
+### PUMA GEOMETRY DATA
+#downloaded from https://maps.princeton.edu/catalog/nyu-2451-34512
+json_nyc = geojson_sf('/Users/djw/Downloads/Public Use Microdata Areas (PUMA).geojson')
+
+### NEIGHBORHOOD INFO
+#downloaded from  https://data.cityofnewyork.us/Housing-Development/Public-Use-Microdata-Areas-PUMA-/cwiz-gcty
+neighborhoods = st_read('/Users/djw/Downloads/nyu-2451-34512-shapefile/nyu_2451_34512.shp') %>%
+  mutate(boro = str_match(namelsad10, "-\\s*(.*?)\\s* ")[,2], #pull out names from column
+         com_dist = str_extract(namelsad10, "[[:digit:]]+"),
+         neighborhood = str_match(namelsad10, "--\\s*(.*?)\\s* PUMA")[,2],
+         puma = as.character(as.numeric(pumace10)) #remove leading 0
+         ) %>%
+  data.table::setDT() #convert to datatable
+  
+#remove column
+neighborhoods = neighborhoods[, !'geometry']
+
+#join dfs
+map_data = inner_join(json_nyc, pov_data, by = c("puma" = "PUMA"))
+map_data = inner_join(map_data, neighborhoods, by = 'puma')
+
+### MAKE INTERACTIVE MAP OF POVERTY RATE BY PUMA
+labels = sprintf(
+  "<h3>%s</h3><h2>%s in Poverty</h2><strong>Population by Ethnicity</strong><br/>White: %s<br/>Black: %s<br/>Asian: %s<br/>Hispanic: %s",
+  map_data$neighborhood,
+  paste0(as.character(map_data$pov_rate), '%'),
+  paste0(round(map_data$`pop_White (non-hispanic)`/map_data$pop*100, 1), '%'),
+  paste0(round(map_data$`pop_Black (non-hispanic)`/map_data$pop*100, 1), '%'),
+  paste0(round(map_data$`pop_Asian (non-hispanic)`/map_data$pop*100, 1), '%'),
+  paste0(round(map_data$`pop_Hispanic (any race)`/map_data$pop*100, 1), '%')
+  ) %>%
+  lapply(htmltools::HTML)
+
+# SET COLORS
+bins <- c(0, 10, 15, 20, 25, 30, 100)
+pal <- colorBin("Blues", domain = map_data$pov_rate, bins = bins)
+
+### INTERACTIVE MAP
+leaflet(map_data) %>%
+  #addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(label = labels,
+              stroke = TRUE,
+              weight = .4,
+              color = "white",
+              smoothFactor = 0.5,
+              opacity = .5,
+              fillOpacity = 0.7,
+              fillColor = ~pal(pov_rate),
+              highlightOptions = highlightOptions(weight = .8,
+                                                  fillOpacity = 1,
+                                                  color = 'white',
+                                                  opacity = 1,
+                                                  bringToFront = TRUE)
+              ) %>%
+  addLegend(position = "bottomright",
+            pal = pal,
+            values = ~ pov_rate,
+            title = "Below NYCgov</br>Poverty Threshold",
+            labFormat = labelFormat(suffix = "%"),
+            opacity = 0.7)
+
+
+#######
+
+library(vroom) #fast importing/loading of csv data
+library(sf) #spatial data
+library(tigris) #geojoin
+library(leaflet) #interactive maps
+library(htmlwidgets) #interactive map labels
+
+shp_nyc = st_read('data/NYC_Public Use Microdata Areas (PUMA)/geo_export_96260c7b-c3ad-4bdf-ad89-a8c8e362361c.shp')
+shp_nyc$puma = as.numeric(shp_nyc$puma)
+shp_nyc2 = st_read('/Users/djw/Downloads/nyu-2451-34512-shapefile/nyu_2451_34512.shp')
+shp_nyc2$puma = as.numeric(shp_nyc2$pumace10)
+shp_nyc3 = st_read('/Users/djw/Downloads/nyu_2451_34512/nyu_2451_34512.shp')
+
+
+
+#need to extract the multipolygon
+shp_nyc$test = NULL
+for (i in length(shp_nyc$geometry)){
+  shp_nyc$test[i] =  shp_nyc$geometry[[i]]
+}
+
+puma_data = dataset %>%
+  filter(year>=2018) %>%
+  # mutate(PUMA = as.numeric(as.character(PUMA))) %>%
+  group_by(year, PUMA) %>%
+  summarise(pov_rate = sum(PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP),
+            pop = sum(PWGTP))
+
+# load NYC PUMA shape file 
+df_map = geo_join(shp_nyc, puma_data,
+                'puma', 'PUMA',
+                how = 'inner')
+#convert to date
+df_map$year = as.Date(as.character(df_map$year), format = "%Y")
+
+### DATA INSPECT
+df_map %>%
+  ggplot(aes(x=pov_rate)) +
+  geom_histogram(bins = 10)
+
+### MAKE INTERACTIVE MAP OF POVERTY RATE BY PUMA
+labels = sprintf(
+  "<strong>%s</strong><br/>%g below NYCgov poverty threshold",
+  df_map$neighborhoods, df_map$pov_rate) %>%
+  lapply(htmltools::HTML)
+
+#create color palette 
+#to test what the palette looks like put 'display.' in front of 'brewer.pal'
+pal = brewer.pal(n = 9, name = 'Blues')
+
+map_interactive = df_map %>%
+  st_transform(crs = "+init=epsg:4326") %>%
+  #st_transform(crs = SRS_string='EPSG:4326') %>%
+  #spTransform(CRS("+proj=longlat +datum=WGS84")) %>%
+  leaflet() %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addPolygons(label = labels,
+              stroke = FALSE,
+              smoothFactor = 0.5,
+              opacity = 1,
+              fillOpacity = 0.7,
+              fillColor = ~pal(pov_rate),
+              highlightOptions = highlightOptions(weight = 5,
+                                                  fillOpacity = 1,
+                                                  color = 'black',
+                                                  opacity = 1,
+                                                  bringToFront = TRUE)
+              ) %>%
+  addLegend(position = "bottomright",
+            pal = pal,
+            values = ~ pov_rate,
+            title = "% below NYCgov Poverty Threshold",
+            opacity = 0.7)
+
+
+
+
+
+
+ 
+######### 
+
+colorRampPalette(brewer.pal(n = 9, name = 'Blues'))(length(unique(na.omit(dataset$year))))
+colorRampPalette(c('#F7FBFF', '#4594C7'))(length(unique(na.omit(dataset$year))))
+
+library(viridis)
+viridis(12, alpha = 0.5)
+
+nb.cols <- 18
+mycolors <- colorRampPalette(brewer.pal(8, "Set2"))(nb.cols)
+
+####################
 ui <- shinyUI({
   sidebarPanel(
     
@@ -94,7 +275,7 @@ shinyApp(ui, server)
 ############### COLOR PALETTE #####
 
 library(RColorBrewer)
-display.brewer.pal(n = length(unique(df$year)), name = 'Blues')
+display.brewer.pal(n = 9, name = 'Blues')
 
 ############### POVERTY DIST #####
 

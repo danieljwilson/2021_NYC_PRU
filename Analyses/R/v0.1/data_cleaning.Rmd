@@ -17,8 +17,9 @@ The goal of this document is to provide a clear overview to how data is imported
 
 ```{r imports, message=FALSE}
 library(tidyverse)
-library(googlesheets4) # for loading google sheet info
+library(googlesheets4) #for loading google sheet info
 library(stringr)
+library(vroom) #quick loading of csvs
 ```
 
 ## Select Files to Import
@@ -104,7 +105,7 @@ for (year in open_years){
   # find year in file list
   index = str_which(open_file_list, as.character(year))
   # load in each individual year
-  df_open = read_csv(paste0(path_open_data, open_file_list[index]))
+  df_open = vroom(paste0(path_open_data, open_file_list[index]))
   
   # test for missing columns
   missing_columns = column_slx_open[which(!column_slx_open %in% colnames(df_open))]
@@ -113,15 +114,19 @@ for (year in open_years){
     print(missing_columns)
   }
   
-  # change coding of NYCgov_Pov_Stat
-  df_open$NYCgov_Pov_Stat[df_open$NYCgov_Pov_Stat==2] <- 0
-  df_open$Off_Pov_Stat[df_open$Off_Pov_Stat==2] <- 0
-  
   # vector with columns that are present
   column_slx = column_slx_open[which(column_slx_open %in% colnames(df_open))]
   
   # select only columns of interest
   df_open = df_open[column_slx]
+  
+  # change coding of NYCgov_Pov_Stat
+  df_open$NYCgov_Pov_Stat[df_open$NYCgov_Pov_Stat==2] <- 0
+  df_open$Off_Pov_Stat[df_open$Off_Pov_Stat==2] <- 0
+  
+  # add numeric version of variables that will be turned into factors
+  df_open$NYCgov_Pov_Stat_num = df_open$NYCgov_Pov_Stat
+  df_open$Off_Pov_Stat_num = df_open$Off_Pov_Stat
   
   # Find categorical columns
   categorical_cols = column_doc %>%
@@ -213,7 +218,7 @@ for (year in open_years){
     # find year in file list
     index = str_which(full_file_list, as.character(year))
     # load in each individual year
-    df_full = read_csv(paste0(path_full, full_file_list[index]))
+    df_full = vroom(paste0(path_full, full_file_list[index]))
     
     # test for missing columns
     missing_columns = column_slx_full[which(!column_slx_full %in% colnames(df_full))]

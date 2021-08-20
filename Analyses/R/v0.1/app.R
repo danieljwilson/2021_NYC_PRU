@@ -1,33 +1,36 @@
 library(tidyverse)
-library(shinydashboard)
-library(plotly)
 library(shiny)
+library(shinydashboard)
 library(DT)
 library(data.table)
-library(markdown)
-library(RColorBrewer)
-library(openxlsx)
+library(markdown) #to include markdown text
+library(RColorBrewer) #for color palette
+library(openxlsx) #to output excel files
+library(viridis) #for color palette
+library(plotly) #alternate plotting library
+library(sf) #simple features access for mapping
+library(geojsonsf) #simple feature convertor
+library(leaflet) #interactive maps
 
 # DASHBOARD ----
 ui <- dashboardPage(
-  dashboardHeader(title = "Poverty Research Unit"),
+  dashboardHeader(title = "NYC Poverty Research Unit"),
   
   # SIDEBAR----
   dashboardSidebar(
     sidebarMenu(
       # Poverty ----
-      menuItem("On Poverty", tabName = "poverty", icon = icon("question-circle"),
-               startExpanded = TRUE,
-               menuItem('About', tabName = 'poverty_about'),
-               menuItem('Profiles', tabName = 'poverty_profiles',
-                        menuSubItem('Jane Doe', tabName = 'poverty_profiles_jane_doe'),
-                        menuSubItem('John Doe', tabName = 'poverty_profiles_john_doe'))),
+      menuItem("Background", tabName = "poverty_about", icon = icon("search-dollar")
+               # menuItem('Profiles', tabName = 'poverty_profiles',
+               #          menuSubItem('Jane Doe', tabName = 'poverty_profiles_jane_doe'),
+               #          menuSubItem('John Doe', tabName = 'poverty_profiles_john_doe'))
+               ),
       # Report -----
       menuItem("Report", tabName = "report", icon = icon("file-alt"),
                menuSubItem('About', tabName = 'report_about'),
-               menuSubItem('1 | Key Findings', tabName = 'report_key_findings'),
-               menuSubItem('2 | Policy and Path', tabName = 'report_policy_path'),
-               menuSubItem('3 | Measuring Poverty', tabName = 'report_measuring'),
+               menuSubItem('Key Findings', tabName = 'report_key_findings'),
+               #menuSubItem('2 | Policy and Path', tabName = 'report_policy_path'),
+               menuSubItem('Measuring Poverty', tabName = 'report_measuring'),
                menuSubItem('Appendices', tabName = 'report_appendices')
       ),
       # Data -----
@@ -35,7 +38,7 @@ ui <- dashboardPage(
                menuSubItem('Spotlight', tabName = 'data_spotlight'),
                menuSubItem('Detail', tabName = 'data_detail'),
                menuSubItem('Comparison', tabName = 'data_comparison'),
-               menuSubItem('Policy', tabName = 'data_policy')
+               menuSubItem('Map', tabName = 'data_map')
       )
     )
   ),
@@ -47,11 +50,45 @@ ui <- dashboardPage(
       # Poverty ----
       ## Poverty About -----
       tabItem(tabName = "poverty_about",
-              h1('On Poverty'),
               fluidPage(
+                h3('About Us'),
                 box(
                   width = 12,
                   status = 'primary',
+                  column(
+                    width = 12,
+                    markdown("
+                             The Poverty Research Team is part of the the [New York City Mayor's Office for Economic Opportunity](http://www1.nyc.gov/site/opportunity/index.page).
+                             
+                             The Poverty Research Unit applies data analytics to build an accurate description of who is in poverty, identify some of the leading causes for being in poverty, and measuring how citywide programs work to offset the poverty rate.
+                             
+                             This data allows NYC Opportunity to better target anti-poverty initiatives and design more effect metrics in measuring success..
+                             ")
+                  ),
+                ),
+                hr(),
+                h3('About the PRU Web App'),
+                box(
+                  width = 12,
+                  status = 'primary',
+                  column(
+                    width = 12,
+                    markdown("
+                             The goal the PRU web app is to provide broader access to the annual New York City poverty report produced by the office each year.
+                             
+                             The app allows users to see key insights from the `Report`, as well as to dynamically interact, visualize and download the `Data` contained in the report.
+                             ")
+                  ),
+                ),
+                hr(),
+                h3('About Poverty'),
+                box(
+                  title = "What is Poverty?",
+                  collapsible = TRUE,
+                  collapsed = TRUE,
+                  width = 12,
+                  status = 'primary',
+                  solidHeader = TRUE,
                   column(
                     width = 7,
                     img(src = "1024px-Bowery_men_waiting_for_bread_in_bread_line,_New_York_City,_Bain_Collection_(cropped).jpg",
@@ -63,20 +100,15 @@ ui <- dashboardPage(
                     h4(tags$em('“By necessaries I understand not only the commodities which are indispensably necessary for the support of life, but whatever the customs of the country renders it indecent for credible people, even of the lowest order to be without.”')),
                     p('-Adam Smith, 1776')
                   ),
-                ),
-                hr(),
-                box(
-                  title = "What is Poverty?",
-                  collapsible = TRUE,
-                  collapsed = TRUE,
-                  width = 12,
-                  status = 'primary',
-                  solidHeader = TRUE,
-                  p('Echoes of Adam Smith\'s definition of poverty from almost 250 years ago can be found in a more recent defintion provided by ', a('The World Bank', href = 'https://www.worldbank.org/en/home', target = '_blank'), ':'),
-                  p(em('Poverty is hunger. Poverty is lack of shelter. Poverty is being sick and not being able to see a doctor. Poverty is not having access to school and not knowing how to read. Poverty is not having a job, is fear for the future, living one day at a time. Poverty has many faces, changing from place to place and across time, and has been described in many ways.  Most often, poverty is a situation people want to escape. So poverty is a call to action -- for the poor and the wealthy alike -- a call to change the world so that many more may have enough to eat, adequate shelter, access to education and health, protection from violence, and a voice in what happens in their communities.', style = "font-family: 'times'; font-size: 16px")),
-                  hr(),
-                  p('If we agree that poverty ', tags$strong('is '), tags$em('a call to action '), ', then a natural question is what should that action be?'),
-                  p('We believe that a first step is to establish a meaningful financial threshold defining poverty, and then measuring which people fall above and below  that threshold.')
+                  column(
+                    width = 12,
+                    hr(),
+                    p('Echoes of Adam Smith\'s definition of poverty from almost 250 years ago can be found in a more recent defintion provided by ', a('The World Bank', href = 'https://www.worldbank.org/en/home', target = '_blank'), ':'),
+                    p(em('Poverty is hunger. Poverty is lack of shelter. Poverty is being sick and not being able to see a doctor. Poverty is not having access to school and not knowing how to read. Poverty is not having a job, is fear for the future, living one day at a time. Poverty has many faces, changing from place to place and across time, and has been described in many ways.  Most often, poverty is a situation people want to escape. So poverty is a call to action -- for the poor and the wealthy alike -- a call to change the world so that many more may have enough to eat, adequate shelter, access to education and health, protection from violence, and a voice in what happens in their communities.', style = "font-family: 'times'; font-size: 16px")),
+                    hr(),
+                    p('If we agree that poverty ', tags$strong('is '), tags$em('a call to action '), ', then a natural question is what should that action be?'),
+                    p('We believe that a first step is to establish a meaningful financial threshold defining poverty, and then measuring which people fall above and below  that threshold.')
+                  )
                 ),
                 box(
                   title = "Why Measure Poverty?",
@@ -161,48 +193,48 @@ ui <- dashboardPage(
       
       ## Poverty Profiles -----
 
-      tabItem(tabName = "poverty_profiles_jane_doe",
-              h1("Profiles"),
-              h3('Note that these to be replaced by \"Archetypes\" if the section is to be kept...'),
-              p("In a city where almost 1 in 5 people are living below the poverty threshold it is inevitable that you cross paths with people living in poverty on a daily basis. But do you know how these pepole are? Or what that experience is like?"),
-              p("Five New Yorkers living under the city's poverty threshold, one from each borough, have generously allowed us to share their stories with you."),
-              hr(style = "border-top: '1px solid black'"),
-              h2("Jane Doe"),
-              h4("34, Park Slope"),
-              img(src = "jane.jpg", width="65%"),
-              hr(),
-              fluidRow(
-                box(width = 5,
-                    h3('The Numbers'),
-                    dataTableOutput('table_jane_doe')
-                    ),
-                box(width = 7,
-                    p('Description of life for Jane Doe...Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse dapibus varius pellentesque. Sed gravida tortor et augue tincidunt pellentesque. Aliquam commodo dignissim purus, at scelerisque diam convallis a. Ut mi ipsum, sollicitudin et feugiat a, suscipit nec nulla. Suspendisse gravida laoreet libero pharetra maximus. Aenean facilisis, diam ut convallis ornare, sapien metus ornare lectus, et malesuada elit metus a nibh. Vivamus cursus elit sed velit aliquam porttitor et quis magna. Quisque pellentesque lorem a augue commodo gravida. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Phasellus sapien sapien, semper sit amet ex a, congue tristique nulla. Vestibulum imperdiet metus ut odio eleifend eleifend. Nullam vel pharetra mauris, non malesuada ex. Vivamus orci nisl, hendrerit vitae velit nec, feugiat finibus neque. Phasellus condimentum, ipsum a malesuada pellentesque, urna ante porttitor nunc, sed rutrum nulla nisi sed nulla. Suspendisse potenti. Vivamus eget metus sollicitudin, pharetra nulla eget, lobortis nulla.'),
-                    p('Cras maximus dolor vitae lacus commodo mattis. Praesent ac augue at diam sollicitudin pharetra vitae et dolor. Praesent blandit eros gravida ante commodo, quis pharetra lacus tempus. Nulla euismod viverra justo vitae ultrices. Donec vitae lorem at nisi sollicitudin congue. Nullam enim neque, efficitur mattis venenatis eu, efficitur ut nulla. In eleifend justo ut sem sagittis egestas. Donec malesuada, ante at pretium aliquam, quam mi pretium neque, sed fringilla dui sapien pulvinar diam. Praesent sapien urna, auctor nec enim a, viverra scelerisque leo. Sed nulla erat, sagittis sit amet mi non, faucibus imperdiet orci. Phasellus id mauris tellus. Praesent a odio augue. Donec ornare sem nulla, vel mattis risus venenatis at. Ut eleifend dictum augue eget malesuada.'),
-                    p('Sed a lacinia lorem. Aenean luctus dui ante, vel molestie nunc bibendum non. Aenean eros quam, consequat gravida condimentum non, blandit nec leo. Donec massa ex, pellentesque sit amet suscipit vel, aliquam non nibh. Phasellus ut orci vestibulum, elementum tortor et, congue lorem. Nam convallis nisi a nisi finibus aliquam. Nullam faucibus massa a est porta, quis mattis erat posuere. Nulla urna lectus, vestibulum id posuere eget, faucibus vel orci. Etiam id molestie lorem, ac imperdiet dolor. Vestibulum sit amet diam vehicula, tincidunt orci a, bibendum ex. Pellentesque fermentum sit amet orci at blandit. Integer facilisis erat eu turpis mattis consectetur. Integer non imperdiet neque, sit amet scelerisque risus. Curabitur et nibh efficitur, fermentum arcu ut, lacinia augue. Proin felis arcu, vestibulum a turpis non, ornare mattis odio. Maecenas nibh velit, commodo eu quam eget, condimentum imperdiet nulla.'),
-                    p('Morbi et libero rutrum, tincidunt elit quis, tempus odio. In maximus ultricies mi, eu elementum augue ornare nec. Integer congue placerat sapien, a efficitur risus rutrum sit amet. In venenatis porttitor urna, sed malesuada purus interdum id. In lacinia venenatis est. Maecenas vulputate malesuada urna sit amet euismod. Mauris a porttitor ipsum, ornare mattis orci. In egestas magna a justo commodo, id auctor odio rutrum. Nullam ultricies odio ac mauris aliquet, quis viverra mi ultrices. Nam eget mollis urna, non ullamcorper nisl. Quisque hendrerit, tellus id scelerisque rutrum, lectus quam viverra tortor, vitae maximus augue augue non ante. Aenean sed pharetra magna. Morbi rhoncus, felis a auctor consectetur, turpis risus ornare mi, vel congue ligula massa et risus. Aliquam euismod massa malesuada nunc interdum, sed tempus enim tincidunt. Sed laoreet sem augue, vitae dignissim sapien malesuada blandit. Aenean sed arcu nec neque pharetra pulvinar.'))
-              )),
-      tabItem(tabName = "poverty_profiles_john_doe",
-              h1("Profiles"),
-              h3('Note that these to be replaced by \"Archetypes\" if the section is to be kept...'),
-              p("In a city where almost 1 in 5 people are living below the poverty threshold it is inevitable that you cross paths with people living in poverty on a daily basis. But do you know how these pepole are? Or what that experience is like?"),
-              p("Five New Yorkers living under the city's poverty threshold, one from each borough, have generously allowed us to share their stories with you."),
-              hr(),
-              h2("John Doe"),
-              h4("48, Sunset Park"),
-              img(src = "john.jpg", width="65%"),
-              hr(),
-              fluidRow(
-                box(width = 5,
-                    h3('The Numbers'),
-                    dataTableOutput('table_john_doe')
-                ),
-                box(width = 7,
-                    p('Description of life for John Doe...Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse dapibus varius pellentesque. Sed gravida tortor et augue tincidunt pellentesque. Aliquam commodo dignissim purus, at scelerisque diam convallis a. Ut mi ipsum, sollicitudin et feugiat a, suscipit nec nulla. Suspendisse gravida laoreet libero pharetra maximus. Aenean facilisis, diam ut convallis ornare, sapien metus ornare lectus, et malesuada elit metus a nibh. Vivamus cursus elit sed velit aliquam porttitor et quis magna. Quisque pellentesque lorem a augue commodo gravida. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Phasellus sapien sapien, semper sit amet ex a, congue tristique nulla. Vestibulum imperdiet metus ut odio eleifend eleifend. Nullam vel pharetra mauris, non malesuada ex. Vivamus orci nisl, hendrerit vitae velit nec, feugiat finibus neque. Phasellus condimentum, ipsum a malesuada pellentesque, urna ante porttitor nunc, sed rutrum nulla nisi sed nulla. Suspendisse potenti. Vivamus eget metus sollicitudin, pharetra nulla eget, lobortis nulla.'),
-                    p('Cras maximus dolor vitae lacus commodo mattis. Praesent ac augue at diam sollicitudin pharetra vitae et dolor. Praesent blandit eros gravida ante commodo, quis pharetra lacus tempus. Nulla euismod viverra justo vitae ultrices. Donec vitae lorem at nisi sollicitudin congue. Nullam enim neque, efficitur mattis venenatis eu, efficitur ut nulla. In eleifend justo ut sem sagittis egestas. Donec malesuada, ante at pretium aliquam, quam mi pretium neque, sed fringilla dui sapien pulvinar diam. Praesent sapien urna, auctor nec enim a, viverra scelerisque leo. Sed nulla erat, sagittis sit amet mi non, faucibus imperdiet orci. Phasellus id mauris tellus. Praesent a odio augue. Donec ornare sem nulla, vel mattis risus venenatis at. Ut eleifend dictum augue eget malesuada.'),
-                    p('Sed a lacinia lorem. Aenean luctus dui ante, vel molestie nunc bibendum non. Aenean eros quam, consequat gravida condimentum non, blandit nec leo. Donec massa ex, pellentesque sit amet suscipit vel, aliquam non nibh. Phasellus ut orci vestibulum, elementum tortor et, congue lorem. Nam convallis nisi a nisi finibus aliquam. Nullam faucibus massa a est porta, quis mattis erat posuere. Nulla urna lectus, vestibulum id posuere eget, faucibus vel orci. Etiam id molestie lorem, ac imperdiet dolor. Vestibulum sit amet diam vehicula, tincidunt orci a, bibendum ex. Pellentesque fermentum sit amet orci at blandit. Integer facilisis erat eu turpis mattis consectetur. Integer non imperdiet neque, sit amet scelerisque risus. Curabitur et nibh efficitur, fermentum arcu ut, lacinia augue. Proin felis arcu, vestibulum a turpis non, ornare mattis odio. Maecenas nibh velit, commodo eu quam eget, condimentum imperdiet nulla.'),
-                    p('Morbi et libero rutrum, tincidunt elit quis, tempus odio. In maximus ultricies mi, eu elementum augue ornare nec. Integer congue placerat sapien, a efficitur risus rutrum sit amet. In venenatis porttitor urna, sed malesuada purus interdum id. In lacinia venenatis est. Maecenas vulputate malesuada urna sit amet euismod. Mauris a porttitor ipsum, ornare mattis orci. In egestas magna a justo commodo, id auctor odio rutrum. Nullam ultricies odio ac mauris aliquet, quis viverra mi ultrices. Nam eget mollis urna, non ullamcorper nisl. Quisque hendrerit, tellus id scelerisque rutrum, lectus quam viverra tortor, vitae maximus augue augue non ante. Aenean sed pharetra magna. Morbi rhoncus, felis a auctor consectetur, turpis risus ornare mi, vel congue ligula massa et risus. Aliquam euismod massa malesuada nunc interdum, sed tempus enim tincidunt. Sed laoreet sem augue, vitae dignissim sapien malesuada blandit. Aenean sed arcu nec neque pharetra pulvinar.'))
-              )),
+      # tabItem(tabName = "poverty_profiles_jane_doe",
+      #         h1("Profiles"),
+      #         h3('Note that these to be replaced by \"Archetypes\" if the section is to be kept...'),
+      #         p("In a city where almost 1 in 5 people are living below the poverty threshold it is inevitable that you cross paths with people living in poverty on a daily basis. But do you know how these pepole are? Or what that experience is like?"),
+      #         p("Five New Yorkers living under the city's poverty threshold, one from each borough, have generously allowed us to share their stories with you."),
+      #         hr(style = "border-top: '1px solid black'"),
+      #         h2("Jane Doe"),
+      #         h4("34, Park Slope"),
+      #         img(src = "jane.jpg", width="65%"),
+      #         hr(),
+      #         fluidRow(
+      #           box(width = 5,
+      #               h3('The Numbers'),
+      #               dataTableOutput('table_jane_doe')
+      #               ),
+      #           box(width = 7,
+      #               p('Description of life for Jane Doe...Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse dapibus varius pellentesque. Sed gravida tortor et augue tincidunt pellentesque. Aliquam commodo dignissim purus, at scelerisque diam convallis a. Ut mi ipsum, sollicitudin et feugiat a, suscipit nec nulla. Suspendisse gravida laoreet libero pharetra maximus. Aenean facilisis, diam ut convallis ornare, sapien metus ornare lectus, et malesuada elit metus a nibh. Vivamus cursus elit sed velit aliquam porttitor et quis magna. Quisque pellentesque lorem a augue commodo gravida. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Phasellus sapien sapien, semper sit amet ex a, congue tristique nulla. Vestibulum imperdiet metus ut odio eleifend eleifend. Nullam vel pharetra mauris, non malesuada ex. Vivamus orci nisl, hendrerit vitae velit nec, feugiat finibus neque. Phasellus condimentum, ipsum a malesuada pellentesque, urna ante porttitor nunc, sed rutrum nulla nisi sed nulla. Suspendisse potenti. Vivamus eget metus sollicitudin, pharetra nulla eget, lobortis nulla.'),
+      #               p('Cras maximus dolor vitae lacus commodo mattis. Praesent ac augue at diam sollicitudin pharetra vitae et dolor. Praesent blandit eros gravida ante commodo, quis pharetra lacus tempus. Nulla euismod viverra justo vitae ultrices. Donec vitae lorem at nisi sollicitudin congue. Nullam enim neque, efficitur mattis venenatis eu, efficitur ut nulla. In eleifend justo ut sem sagittis egestas. Donec malesuada, ante at pretium aliquam, quam mi pretium neque, sed fringilla dui sapien pulvinar diam. Praesent sapien urna, auctor nec enim a, viverra scelerisque leo. Sed nulla erat, sagittis sit amet mi non, faucibus imperdiet orci. Phasellus id mauris tellus. Praesent a odio augue. Donec ornare sem nulla, vel mattis risus venenatis at. Ut eleifend dictum augue eget malesuada.'),
+      #               p('Sed a lacinia lorem. Aenean luctus dui ante, vel molestie nunc bibendum non. Aenean eros quam, consequat gravida condimentum non, blandit nec leo. Donec massa ex, pellentesque sit amet suscipit vel, aliquam non nibh. Phasellus ut orci vestibulum, elementum tortor et, congue lorem. Nam convallis nisi a nisi finibus aliquam. Nullam faucibus massa a est porta, quis mattis erat posuere. Nulla urna lectus, vestibulum id posuere eget, faucibus vel orci. Etiam id molestie lorem, ac imperdiet dolor. Vestibulum sit amet diam vehicula, tincidunt orci a, bibendum ex. Pellentesque fermentum sit amet orci at blandit. Integer facilisis erat eu turpis mattis consectetur. Integer non imperdiet neque, sit amet scelerisque risus. Curabitur et nibh efficitur, fermentum arcu ut, lacinia augue. Proin felis arcu, vestibulum a turpis non, ornare mattis odio. Maecenas nibh velit, commodo eu quam eget, condimentum imperdiet nulla.'),
+      #               p('Morbi et libero rutrum, tincidunt elit quis, tempus odio. In maximus ultricies mi, eu elementum augue ornare nec. Integer congue placerat sapien, a efficitur risus rutrum sit amet. In venenatis porttitor urna, sed malesuada purus interdum id. In lacinia venenatis est. Maecenas vulputate malesuada urna sit amet euismod. Mauris a porttitor ipsum, ornare mattis orci. In egestas magna a justo commodo, id auctor odio rutrum. Nullam ultricies odio ac mauris aliquet, quis viverra mi ultrices. Nam eget mollis urna, non ullamcorper nisl. Quisque hendrerit, tellus id scelerisque rutrum, lectus quam viverra tortor, vitae maximus augue augue non ante. Aenean sed pharetra magna. Morbi rhoncus, felis a auctor consectetur, turpis risus ornare mi, vel congue ligula massa et risus. Aliquam euismod massa malesuada nunc interdum, sed tempus enim tincidunt. Sed laoreet sem augue, vitae dignissim sapien malesuada blandit. Aenean sed arcu nec neque pharetra pulvinar.'))
+      #         )),
+      # tabItem(tabName = "poverty_profiles_john_doe",
+      #         h1("Profiles"),
+      #         h3('Note that these to be replaced by \"Archetypes\" if the section is to be kept...'),
+      #         p("In a city where almost 1 in 5 people are living below the poverty threshold it is inevitable that you cross paths with people living in poverty on a daily basis. But do you know how these pepole are? Or what that experience is like?"),
+      #         p("Five New Yorkers living under the city's poverty threshold, one from each borough, have generously allowed us to share their stories with you."),
+      #         hr(),
+      #         h2("John Doe"),
+      #         h4("48, Sunset Park"),
+      #         img(src = "john.jpg", width="65%"),
+      #         hr(),
+      #         fluidRow(
+      #           box(width = 5,
+      #               h3('The Numbers'),
+      #               dataTableOutput('table_john_doe')
+      #           ),
+      #           box(width = 7,
+      #               p('Description of life for John Doe...Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse dapibus varius pellentesque. Sed gravida tortor et augue tincidunt pellentesque. Aliquam commodo dignissim purus, at scelerisque diam convallis a. Ut mi ipsum, sollicitudin et feugiat a, suscipit nec nulla. Suspendisse gravida laoreet libero pharetra maximus. Aenean facilisis, diam ut convallis ornare, sapien metus ornare lectus, et malesuada elit metus a nibh. Vivamus cursus elit sed velit aliquam porttitor et quis magna. Quisque pellentesque lorem a augue commodo gravida. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Phasellus sapien sapien, semper sit amet ex a, congue tristique nulla. Vestibulum imperdiet metus ut odio eleifend eleifend. Nullam vel pharetra mauris, non malesuada ex. Vivamus orci nisl, hendrerit vitae velit nec, feugiat finibus neque. Phasellus condimentum, ipsum a malesuada pellentesque, urna ante porttitor nunc, sed rutrum nulla nisi sed nulla. Suspendisse potenti. Vivamus eget metus sollicitudin, pharetra nulla eget, lobortis nulla.'),
+      #               p('Cras maximus dolor vitae lacus commodo mattis. Praesent ac augue at diam sollicitudin pharetra vitae et dolor. Praesent blandit eros gravida ante commodo, quis pharetra lacus tempus. Nulla euismod viverra justo vitae ultrices. Donec vitae lorem at nisi sollicitudin congue. Nullam enim neque, efficitur mattis venenatis eu, efficitur ut nulla. In eleifend justo ut sem sagittis egestas. Donec malesuada, ante at pretium aliquam, quam mi pretium neque, sed fringilla dui sapien pulvinar diam. Praesent sapien urna, auctor nec enim a, viverra scelerisque leo. Sed nulla erat, sagittis sit amet mi non, faucibus imperdiet orci. Phasellus id mauris tellus. Praesent a odio augue. Donec ornare sem nulla, vel mattis risus venenatis at. Ut eleifend dictum augue eget malesuada.'),
+      #               p('Sed a lacinia lorem. Aenean luctus dui ante, vel molestie nunc bibendum non. Aenean eros quam, consequat gravida condimentum non, blandit nec leo. Donec massa ex, pellentesque sit amet suscipit vel, aliquam non nibh. Phasellus ut orci vestibulum, elementum tortor et, congue lorem. Nam convallis nisi a nisi finibus aliquam. Nullam faucibus massa a est porta, quis mattis erat posuere. Nulla urna lectus, vestibulum id posuere eget, faucibus vel orci. Etiam id molestie lorem, ac imperdiet dolor. Vestibulum sit amet diam vehicula, tincidunt orci a, bibendum ex. Pellentesque fermentum sit amet orci at blandit. Integer facilisis erat eu turpis mattis consectetur. Integer non imperdiet neque, sit amet scelerisque risus. Curabitur et nibh efficitur, fermentum arcu ut, lacinia augue. Proin felis arcu, vestibulum a turpis non, ornare mattis odio. Maecenas nibh velit, commodo eu quam eget, condimentum imperdiet nulla.'),
+      #               p('Morbi et libero rutrum, tincidunt elit quis, tempus odio. In maximus ultricies mi, eu elementum augue ornare nec. Integer congue placerat sapien, a efficitur risus rutrum sit amet. In venenatis porttitor urna, sed malesuada purus interdum id. In lacinia venenatis est. Maecenas vulputate malesuada urna sit amet euismod. Mauris a porttitor ipsum, ornare mattis orci. In egestas magna a justo commodo, id auctor odio rutrum. Nullam ultricies odio ac mauris aliquet, quis viverra mi ultrices. Nam eget mollis urna, non ullamcorper nisl. Quisque hendrerit, tellus id scelerisque rutrum, lectus quam viverra tortor, vitae maximus augue augue non ante. Aenean sed pharetra magna. Morbi rhoncus, felis a auctor consectetur, turpis risus ornare mi, vel congue ligula massa et risus. Aliquam euismod massa malesuada nunc interdum, sed tempus enim tincidunt. Sed laoreet sem augue, vitae dignissim sapien malesuada blandit. Aenean sed arcu nec neque pharetra pulvinar.'))
+      #         )),
       # Report ----
       ## Report - About -----
       tabItem("report_about",
@@ -248,7 +280,7 @@ ui <- dashboardPage(
                     hr(),
                     fluidRow(
                       box(
-                        title = 'NYCgov and U.S. Official Poverty Rates 2005–2019',
+                        title = textOutput('report_keyfindings_plot_1_1_title'),
                         width = 9,
                         status = 'primary',
                         tabsetPanel(type = "tabs",
@@ -273,7 +305,7 @@ ui <- dashboardPage(
                     ),
                     fluidRow(
                       box(
-                        title = 'Official and NYCgov Poverty Thresholds, 2005–2019',
+                        title = textOutput('report_keyfindings_plot_1_2_title'),
                         width = 9,
                         tabsetPanel(type = "tabs",
                                     tabPanel("Plot", plotlyOutput("plot_1_2_threshold")),
@@ -323,37 +355,52 @@ ui <- dashboardPage(
                       tags$li('Among residents of all boroughs')
                     ),
                     p('There were no statistically significant ', tags$strong('increases'), ' in poverty or near poverty for any group from 2018 to 2019, or from 2015 to 2019. Detailed data tables for poverty rates are provided in Chapter 4.'),
-                    fluidRow(
-                      box(
-                        #title = 'NYCgov Poverty Rates, 2015–2019',
-                        width = 12,
-                        status = 'primary',
-                        h3('NYCgov Poverty Rates, 2015-2019'),
-                        column(3,
-                               selectInput("select_1_2_options", h4("Options"), 
-                                           choices = list("Age" = 'AgeCateg', "Sex" = 'SEX',
-                                                          "Race/Ethnicity" = 'Ethnicity',
-                                                          "Race/Ethnicity and Gender" = 'ethnicity_sex',
-                                                          "Citizenship Status" = 'CitizenStatus',
-                                                          "Educational Attainment" = 'EducAttain',
-                                                          "Work Experience" = 'FTPTWork',
-                                                          "Borough" = 'Boro'
-                                                          ), selected = 'AgeCateg')
-                               ),
-                        column(9,
-                               tabsetPanel(type = "tabs",
-                                           tabPanel("Plot", plotOutput("plot_1_2_fig_3to10")),
-                                           tabPanel("Data", dataTableOutput('table_1_2_fig_3to10')),
-                                           tabPanel("Source/Notes",
-                                                    tags$strong('Source:'),
-                                                    'American Community Survey Public Use Micro Sample as augmented by NYC Opportunity. U.S. official threshold from U.S. Census Bureau.'
-                                                    )
-                                           )
-                               )
+                    box(
+                      #title = 'NYCgov Poverty Rates, 2015–2019',
+                      width = 12,
+                      status = 'primary',
+                      h3(textOutput('report_multiplot_title')),
+                      hr(),
+                      column(4,
+                             selectInput("report_keyfindings_multiplot_group_select1", label = "Grouping 1", 
+                                         choices = list("Age" = 'AgeCateg', "Sex" = 'SEX',
+                                                        "Race/Ethnicity" = 'Ethnicity',
+                                                        "Citizenship Status" = 'CitizenStatus',
+                                                        "Educational Attainment" = 'EducAttain',
+                                                        "Work Experience" = 'FTPTWork',
+                                                        "Borough" = 'Boro'
+                                                        ), selected = 'AgeCateg')
+                             ),
+                      column(4,
+                             selectInput("report_keyfindings_multiplot_group_select2", label = "Grouping 2",
+                                         choices = list("-" = "None", "Age" = 'AgeCateg', "Sex" = 'SEX',
+                                                        "Race/Ethnicity" = 'Ethnicity',
+                                                        "Citizenship Status" = 'CitizenStatus',
+                                                        "Educational Attainment" = 'EducAttain',
+                                                        "Work Experience" = 'FTPTWork',
+                                                        "Borough" = 'Boro'
+                                         ), selected = 'None')
+                             ),
+                      column(4,
+                             sliderInput("report_keyfindings_multiplot_year_slider", 
+                                         label = "Year(s)", min = 2005, 
+                                         max = 2019, value = c(2015, 2019), sep='', ticks = FALSE)
                       )
                     ),
-                    h4('Figure 1.11: Percentage of Population Below Poverty Threshold, by Neighborhood, 2015–2019'),
-                    h4('Table 1.2: Racial and Ethnic Composition of Community Districts (CDs) with Highest and Lowest Poverty Rates, 2015–2019')
+                    fluidRow(
+                      column(11,
+                             tabsetPanel(type = "tabs",
+                                         tabPanel("Plot", plotOutput("plot_1_2_fig_3to10")),
+                                         tabPanel("Data", dataTableOutput('table_1_2_fig_3to10')),
+                                         tabPanel("Source/Notes",
+                                                  tags$strong('Source:'),
+                                                  'American Community Survey Public Use Micro Sample as augmented by NYC Opportunity. U.S. official threshold from U.S. Census Bureau.'
+                                         )
+                             )
+                      )
+                    ),
+                    #h4('Figure 1.11: Percentage of Population Below Poverty Threshold, by Neighborhood, 2015–2019'),
+                    #h4('Table 1.2: Racial and Ethnic Composition of Community Districts (CDs) with Highest and Lowest Poverty Rates, 2015–2019')
                   )
                 ),
                 fluidRow(
@@ -445,158 +492,158 @@ ui <- dashboardPage(
                 )
              ),
       ## Report: Policy & Path ----
-      tabItem("report_policy_path",
-              fluidPage(
-                h1("2 | Policy & Path"),
-                p('This is the final poverty report issued by the de Blasio administration. As such, it provides an opportunity to look back on the poverty policy of two mayoral terms and its impact. This year’s report shows a decline in poverty and near poverty. The New York City Government (NYCgov) poverty rate fell from 20.2 percent to 17.9 percent from 2014 to 2019, a statistically significant change. The rate for 2019 is the lowest since the start of the de Blasio administration and, in fact, the lowest rate going back to 2005 – the first year captured by the poverty measure. As of 2019, there were 521,000 fewer people in poverty or near poverty than if rates had remained at their 2013 levels. The decline reflects how increases in the minimum wage, rising labor market participation, and the many policies implemented during the de Blasio administration improved the economic well-being of low-income New Yorkers.'),
-                p('This year’s report represents a snapshot of poverty and near poverty in New York City before the COVID-19 pandemic arrived in early 2020, so it must be viewed within that context. It nevertheless contains important lessons about the current state of poverty. The report also considers how, as conditions improve and the City reopens (with an infusion of federal help from the American Rescue Plan Act of 2021 that includes significant aid to city governments), it can recover from the negative economic impact of COVID-19.'),
-                p('Poverty rates have declined significantly for most demographic groups during this administration’s two terms, as Table 2.1 shows by comparing 2014 and 2019 rates.'),
-                h2('Table 2.1: NYCgov Poverty Rates for Persons, by Demographic Characteristic, 2014 and 2019'),
-                p('This report includes information on the poverty gap – the amount of money needed to lift all families over the poverty threshold if the funds were perfectly targeted. The overall gap, $6.5 billion in 2019, did not change compared to 2014. But the gap for families with children and for single, nonelderly adults living alone or with unrelated individuals showed statistically significant declines from 2014 to 2019. See Table 2.2.'),
-                h2('Table 2.2: NYCgov Poverty Gap, 2014–2019'),
-                box(
-                  title = '2.1 | Jobs and Increased Wages',
-                  collapsible = TRUE,
-                  collapsed = TRUE,
-                  width = 12,
-                  status = 'primary',
-                  solidHeader = TRUE,
-                  p('One of the main lessons from the poverty data going back to 2014 is, not surprisingly, that well-paying jobs play a critical role in lifting people out of poverty and keeping them out. In particular, NYCgov data in this report and reports issued during the de Blasio administration show that the minimum wage has been one of the most powerful forces in moving people above the poverty line and keeping them there.'),
-                  p('New York State sets the minimum wage in New York City, but the City aggressively worked with the State legislature to raise it through a multi-year phase-in. An increase in the minimum wage to $15 was a centerpiece of the City’s goal of moving 800,000 New Yorkers out of poverty or near poverty between 2013 and 2025. The minimum wage in the city, which was just $7.25 in 2013, rose to $15 for employers with 11 or more workers on the last day of 2018. It rose to $15 for smaller employers on the last day of 2019. That means the data in this year’s report are the first in which all but the smallest employers in the city were paying a minimum wage of $15. Between 2013 and 2019 the poverty threshold rose 16 percent, so New Yorkers benefiting from higher wages and a strong job market also contended with greater expenses. Even so, the actual number of people moved out of poverty or near poverty through the first year of the $15 minimum wage is about 521,000 – a population that would constitute the 35th largest city in the United States and more than the total number of residents of Miami or Atlanta, for instance.'),
-                  p('The minimum wage reached $15 in a peak year for the job market. By 2019 employment had regained and surpassed jobs lost throughout the Great Recession, and it was a year before the COVID-19-related shutdown occurred. The $15 minimum wage appeared to have no notable impact on employment demand. Labor force participation rose over 5 percent from 2014 to 2019, with more workers engaged in full-time, year-round employment. Wages defining the bottom decile of the labor force grew by over $3,000. These two factors – wage growth and employment opportunity – were core drivers of the declining poverty rate.'),
-                  p('The City also promoted increased wages in other ways. It has raised wages for its own workforce, nonprofit contracted vendors, and childcare workers. Although many of the workers who benefited from these wage increases were already above poverty or near poverty, in other cases the increases helped to lift families out of poverty or near poverty and into more stable, self-sufficient economic circumstances.'),
-                  p('In April 2014 the City’s Earned Sick Time Act took effect, requiring many employers in New York City to provide employees with paid sick leave. By requiring employers to pay New Yorkers for days they take off to care for themselves or a family member, the law has increased take-home pay for many. The City has also established a program of free, high-quality universal pre-K and greatly expanded free 3-K. In addition to providing vitally important early childhood education, these programs increase wages in working families by freeing up parents to work more hours without having to pay for childcare.'),
-                  p('The City has also promoted increased earnings through increased job creation. It has engaged in a wide range of efforts to foster economic development and the expansion of good jobs. In August 2020, the City announced a pledge by 27 of New York City’s largest employers, made in coordination with the Mayor’s Office, to create 100,000 jobs for low-income members of the Black, Latinx, and Asian communities by 2030. As part of this commitment, the New York Jobs CEO Council, a newly created nonprofit group, said it would partner with the City University of New York (CUNY) and the New York City Department of Education (DOE), with the aim of hiring at least 25,000 students by directing them to entry-level jobs, apprenticeships, and work-based learning opportunities.'),
-                  p('The City looks to job training as an important tool for lifting New Yorkers out of poverty. The City has invested heavily in Jobs-Plus, a proven, place-based employment program for residents of New York City Housing Authority (NYCHA) developments that focuses on providing employment-related services, creating financial incentives that “make work pay,” and promoting community support for work. The City offers other job training programs, including Advance & Earn, a training and employment program for youth between the ages of 16 and 24. The City additionally has significantly expanded the number of slots in the decades-old Summer Youth Employment Program (SYEP) and launched the NYC Center for Youth Employment, a first-of-its-kind office designed to bring focus, rigor, and coordination to helping young people prepare for career success.'),
-                  p('The City has an array of other initiatives designed to help New Yorkers find well-paying employment. In February 2019, it launched the Disconnected Youth Task Force to examine the obstacles faced by young people between the ages of 16 and 24 who are out of work and not in school. The City also recently launched WorkingNYC, a one-stop online portal that directs New Yorkers to jobs, job training, and educational opportunities.')
-                  ),
-                box(
-                  title = '2.2 | Affordable Housing',
-                  collapsible = TRUE,
-                  collapsed = TRUE,
-                  width = 12,
-                  status = 'primary',
-                  solidHeader = TRUE,
-                  p('The availability of affordable housing is another important factor in determining whether New Yorkers live above the poverty line. It is especially important in the city because of the high cost of housing compared to other parts of the country, and the large percentage of income New York City households spend on housing. Housing supports that range from public housing to rent regulated units consistently lower the poverty rate by freeing up family resources to meet other needs. The effect has been to lower the poverty rate in the range of approximately 5.5 to 6.6 percentage points in a given year.'),
-                  p('The City has made a strong commitment to increasing the availability of affordable housing. When Mayor de Blasio took office in 2014, he launched Housing New York with the ambitious goal of creating or preserving 200,000 affordable homes and apartments in ten years. In November 2017, the administration announced it would meet that goal two years early, and launched Housing New York 2.0, a roadmap to a new goal of creating or preserving 300,000 houses or apartments by 2026. Housing New York 2.0 included new initiatives to help New Yorkers buy a first home, afford their rent, and stay in their neighborhoods. In January 2020, the City launched a third phase of Housing New York, YOUR Home NYC, with new initiatives to build and preserve affordable housing, protect renters, and create neighborhood wealth.'),
-                  p('The City has also focused on helping New Yorkers who have housing to remain in it, since the loss of a home often contributes to a family or individual moving into poverty. In August 2017, the mayor signed a law creating a right to counsel in eviction cases, which has given New Yorkers an important new weapon to ward off eviction and possible homelessness. In January 2019, the mayor established the Mayor’s Office to Protect Tenants by executive order, which coordinates an array of tenant-protection efforts. The City’s Department of Social Services (DSS) operates a program that extends emergency rental assistance to families and individuals at risk of being evicted. In addition, the City launched its first-ever NYC Tenant Resource Portal, an online resource to help New Yorkers who rent their homes to access free City resources to prevent evictions.'),
-                  p('The City also ramped up efforts to address homelessness, which remains a stubborn problem. It launched the HOME-STAT program, which sends canvassing teams out to identify homeless New Yorkers and connect them with homeless outreach staff who can address their housing and social service needs. Another program, One Shot Deal, extends one-time emergency grants to help New Yorkers facing unexpected circumstances to remain in their housing or assist them in moving into new housing. The City also operates CityFHEPS, a voucher program that helps New Yorkers experiencing homelessness to obtain permanent housing.')
-                ),
-                box(
-                  title = '2.3 | Benefits',
-                  collapsible = TRUE,
-                  collapsed = TRUE,
-                  width = 12,
-                  status = 'primary',
-                  solidHeader = TRUE,
-                  p('For many New Yorkers, government benefits of all kinds make the difference between living above the poverty line or below it. For example, combined tax credits such as the Earned Income Tax Credit (EITC) or the Child Tax Credit lower poverty an average of 3 percentage points. Supplemental Nutrition Assistance Program (SNAP) benefits have a similar effect.'),
-                  p('The City has launched an array of initiatives designed to make it easier for New Yorkers to learn which benefits they qualify for and apply for them. NYC Opportunity updated ACCESS NYC, a digital tool that allows people to easily check their potential eligibility for over 30 federal, New York State, and New York City benefits. Available in over ten languages, the site provides information on how programs work, what documentation is required, how to apply online, and how to receive help. HRA also launched ACCESS HRA, available as a website and as a mobile app, which allows New Yorkers to apply for SNAP and Cash Assistance and regularly check the status of their benefits.'),
-                  p('The City also introduced an array of reforms that removed obstacles to obtaining benefits. Clients previously were required to “work off” their benefits through the Work Experience Program (WEP) at City and nonprofit agencies. The City eliminated WEP and instead offers new opportunities for subsidized jobs, internships, and education and trainings oriented toward building career pathways.'),
-                  p('The City has transformed Cash Assistance procedures to reduce unnecessary office visits. This allows clients to submit recertification questionnaires online and submit documents from a smartphone. The City has also put in place new protocols to prevent unnecessary case closings, which required clients to request a State fair hearing to reopen their case. With the new protocols, State fair hearing challenges declined by more than 47 percent.'),
-                  p('On the policy level, the City has been a strong advocate for increased benefits. In June 2020, the mayor and the City’s Corporation Counsel joined a coalition of state attorneys general in urging Congress to block Trump administration efforts to cut SNAP benefits. In January 2021, President Biden signed an executive order that increased the amount of SNAP benefits people are eligible for, which applied to very low-income households in particular.'),
-                  p('The City also successfully advocated for a change in State law that permits clients to obtain a college degree while receiving benefits. Participation in a four-year college program was not a permissible employment activity for clients before the change – a limitation that cut many off from degrees that would greatly improve their ability to earn a living wage.')
-                ),
-                box(
-                  title = '2.4 | Education',
-                  collapsible = TRUE,
-                  collapsed = TRUE,
-                  width = 12,
-                  status = 'primary',
-                  solidHeader = TRUE,
-                  p('Education is one of the most powerful tools for moving people out of poverty. Extensive data show a strong correlation between education levels and living above the poverty line. It is consistently found that an individual with less than a high school degree is four times more likely to be poor than an individual with a bachelor’s degree or higher. Gaining a high school degree lowers that risk to three times more likely to be poor. The City has heavily invested in initiatives to increase access to education at all levels. New York City has been a national leader in universal pre-K and 3-K, expanding free, high-quality early childhood education, which is shown to be strongly associated with success later in life, including economic success.'),
-                  p('At the elementary and middle-school levels, the City’s Equity and Excellence for All initiative has introduced an array of improvements and reforms. The City placed reading coaches in every elementary school and continued to expand access to bilingual and dual-language programs.'),
-                  p('The City has also introduced high school-level programs to increase student access to higher education and their marketable technical skills. It launched the Computer Science for All initiative as part of its Equity and Excellence for All agenda to ensure that all City schools can provide equitable computer science learning experiences to their students. The City’s AP for All initiative similarly brings advanced placement (AP) courses to schools that offer few or no AP courses. In 2018, the City had its highest ever number of students taking and passing AP exams.'),
-                  p('At the college level, CUNY’s Accelerated Study in Associate Programs (ASAP) has a proven record of helping low-income students remain in school and obtain associate degrees. Since the program’s inception, 14 CUNY ASAP cohorts have totaled 70,000 students admitted across an array of CUNY colleges. Its current three-year graduation rate is 53 percent versus 24 percent for similar students not enrolled in the program. In 2015, NYC Opportunity provided support for Accelerate, Complete, and Engage (ACE), a program similar to CUNY ASAP that supports students pursuing baccalaureate degrees.')
-                ),
-                box(
-                  title = '2.5 | Equity',
-                  collapsible = TRUE,
-                  collapsed = TRUE,
-                  width = 12,
-                  status = 'primary',
-                  solidHeader = TRUE,
-                  p('The data in this report, and reports issued over the past two mayoral terms, show that people of color are disproportionately likely to live in poverty and have difficulty rising out of it. The disparities are stubbornly persistent. Poverty rates fell from 2014 to 2019 for all the racial and ethnic groups regularly tracked in this report. But these declines were slow, few significant year-over-year changes exist, and significant changes only appear when measured over the longer term.'),
-                  p('Even as poverty rates fell, the differences between groups remain. In any given year Hispanic poverty rates are nearly double that of rates for Whites. The average differences in rates for Blacks (nearly 65 percent higher) and Asians (just over 75 percent higher) are also notable. For this reason, racial equity is a critical part of the City’s work to reduce poverty. The City has launched a wide range of initiatives to address racial and other disparities.'),
-                  p('In May 2019, the mayor signed Executive Order 45 (EO 45), which expanded the City’s focus on equity in its own operations and across New York City. EO 45 directs City agencies to identify disparities in their work based on income, race/ethnicity, gender, and other factors. Agencies are required to develop plans to address identified disparities.'),
-                  p('To reduce inequity, it is important to know where it exists. To this end, the City has significantly increased the amount and quality of information available on disparities of all kinds. It has published a Social Indicators Report since 2016, which provides a snapshot of social and economic conditions across the City. In 2019, the report was redesigned as the Social Indicators and Equity Report, with significantly more data on disparities by race, gender, income, and other factors. In February 2021, the City launched EquityNYC, a website that presents the data in a highly accessible online format.'),
-                  p('The City has also promoted equity by increasing its support for Minority and Women-Owned Businesses (M/WBEs). In OneNYC, the blueprint for New York City’s future, the City set a goal of awarding nearly $16 billion out of $25 billion in contracts to M/WBEs by 2020; as of mid-2020 it was running ahead of schedule.'),
-                  p('In July 2020, the mayor signed an executive order to strengthen M/WBEs. He also announced new initiatives with the Taskforce on Racial Inclusion and Equity to help Black and Latinx entrepreneurs connect with business opportunities, including government contracts.'),
-                  p('The City has an array of specialized programs designed to promote equity in specific areas. These include NYC Men Teach, the nation’s most ambitious effort to diversify the teaching pipeline. It has a goal of recruiting and retaining 1,000 additional men of color to teach in New York City schools, where less than 8 percent of teachers are men of color.')
-                ),
-                box(
-                  title = '2.6 | Immigrant Assistance',
-                  collapsible = TRUE,
-                  collapsed = TRUE,
-                  width = 12,
-                  status = 'primary',
-                  solidHeader = TRUE,
-                  p('The data in this report show that New York City’s immigrants are disproportionately likely to live in poverty. The non-citizen poverty rate fell 5 percentage points from 2014 to 2019, but remains 6 percentage points higher than the poverty rate for native-born citizens. This aligns with the wealth of evidence showing that there are strong economic benefits to obtaining citizenship status. One study sponsored by the Mayor’s Office of Immigrant Affairs (MOIA) found that with naturalization, individual annual earnings increase by an average of 8.9 percent, the employment rate rises 2.2 percentage points, and homeownership increases 6.3 percentage points.1 Starting in 2018, NYC Opportunity began to issue reports specifically analyzing poverty among immigrants in the city. The agency’s “An Economic Profile of Immigrants in New York City”2 provides data and analysis that can help City policymakers identify where poverty exists in immigrant communities and develop strategies for addressing it.'),
-                  p('MOIA, the City office dedicated to supporting and empowering immigrants, offers an array of programs designed to help immigrants economically succeed. ActionNYC offers all New Yorkers free immigration legal help. It works through a network of trusted community-based organizations (CBOs), delivering its services in public schools, public health facilities, and other CBOs. It also operates a toll-free hotline where immigrants can ask questions and be connected to free and safe legal help. Another program, NYCitizenship, provides free legal help with citizenship applications at select New York Public Library branches.'),
-                  p('IDNYC, the nation’s most robust municipal ID program, has been of particular help to immigrant New Yorkers. The free identification card, which is issued without regard to immigration status, helps New Yorkers access a wide variety of vital services, including banking; employment; access to public buildings, including schools; and public benefits.')
-                ),
-                box(
-                  title = '2.7 | Health and Well-being',
-                  collapsible = TRUE,
-                  collapsed = TRUE,
-                  width = 12,
-                  status = 'primary',
-                  solidHeader = TRUE,
-                  p('Health difficulties are a significant factor that can move people into poverty and keep them there due to the costs associated with being ill, and the fact that illness can interfere with their ability to earn. Out-of-pocket medical spending consistently adds approximately 3 percentage points to the poverty rate.'),
-                  p('The City has taken a bold stand for universal health care. In January 2019, the mayor announced plans to guarantee health care for all New Yorkers. The initiative was designed to serve the 600,000 New Yorkers who lacked insurance by strengthening MetroPlus, the City’s public health insurance option. The initiative also launched NYC Care, a new program that guarantees anyone eligible for insurance, including undocumented immigrants, direct access to NYC Health + Hospitals physicians, pharmacies, and mental health and substance abuse services.'),
-                  p('The City has other targeted health initiatives. In July 2018, it launched a comprehensive, four-point program to reduce maternal deaths and life-threatening complications from childbirth among women of color. These maternal mortality rates and the racial disparities within them remain an ongoing challenge. The City announced it would invest $12.8 million in the plan over the next three years, including implicit bias training for private and public health care providers, support for private and public hospitals to enhance data tracking and analysis of maternal mortality events, and other measures.'),
-                  p('The City has also made mental health a priority through the ThriveNYC initiative. Connections to Care (C2C), a part of ThriveNYC, integrated mental health support into the work of CBOs that serve at-risk and low-income communities across the city. C2C CBOs work with mental health providers who train and coach staff to screen for mental health needs, and either offer clients direct support or connect them with local health care providers. A preliminary program evaluation found that most participants were from ethnic minority backgrounds, with over half reporting incomes of less than $5,000 – an indication that C2C was reaching its intended target population.')
-                ),
-                box(
-                  title = '2.8 | Broadband Access',
-                  collapsible = TRUE,
-                  collapsed = TRUE,
-                  width = 12,
-                  status = 'primary',
-                  solidHeader = TRUE,
-                  p('In today’s digital economy, broadband access is important to financial success. The internet is a vital tool for accessing job opportunities, pursuing education, and starting businesses. In January 2020, the City announced its NYC Internet Master Plan, a bold vision for affordable, high-speed, reliable broadband service throughout the five boroughs. The City has promoted broadband access in a variety of ways, with a particular focus on marginalized communities and low-income New Yorkers. In April 2020, the City announced it would provide tablets and internet access to 10,000 seniors in public housing. This $5 million program was designed to reduce isolation among older New Yorkers and help them access information about COVID-19.'),
-                ),
-                box(
-                  title = '2.9 | Climate Change',
-                  collapsible = TRUE,
-                  collapsed = TRUE,
-                  width = 12,
-                  status = 'primary',
-                  solidHeader = TRUE,
-                  p('Global climate change has a negative financial impact, particularly on economically vulnerable households. The City has launched or expanded a number of programs designed to help low-income New Yorkers handle the costs associated with rising temperatures, increased flooding, and other effects of climate change. NYC Opportunity’s poverty research team has conducted research and provided input for several climate-related projects. The team participated in a working group that explored affordable flood insurance for homeowners and renters in coastal areas. It also assisted a successful effort to increase utility company energy subsidies to low- income households, based on an updated measure of the burden of household energy costs.'),
-                ),
-                box(
-                  title = '2.10 | COVID-19 Response',
-                  collapsible = TRUE,
-                  collapsed = TRUE,
-                  width = 12,
-                  status = 'primary',
-                  solidHeader = TRUE,
-                  p('This year’s report covers a period before the COVID-19 pandemic. It should be noted that when COVID-19 hit New York City in early 2020, the City rapidly and forcefully responded to both the health threat and the extensive economic impact. NYC Opportunity’s poverty research team has analyzed U.S. Census Bureau Pulse Data to assess the financial impact of COVID-19. It has found widespread job and income losses in the city with some groups particularly hard hit, including workers with a high school education or less and Asian workers.3 It also found that the COVID-19 crisis was having a disproportionately large economic impact on women.'),
-                  p('The City immediately implemented Get Food NYC, a free food distribution program that included grab-and-go meals at New York City schools. The program was available to all children and adults in need, and included emergency home food distribution. The City appointed a COVID-19 Food Czar to coordinate multi-agency efforts. By late September 2020, the Food Czar’s operation had distributed more than 135 million meals to hungry and food-insecure New Yorkers. At the time, it delivered approximately 400,000 meals a day through its Emergency Food Delivery program, which brought meals to homebound low-income New Yorkers. It also served an additional 450,000 grab-and-go meals daily at over 400 New York City school locations.'),
-                  p('The City launched initiatives to help small businesses and their employees affected by the pandemic, including a small business relief program that made loans available to small businesses affected by COVID-19. The Open Restaurants program allowed restaurants to establish outdoor dining on public roadways and sidewalks. The City also established a Restaurant Revitalization Program, which provides funds to restaurants to pay unemployed and under-employed workers affected by the COVID-19 crisis.'),
-                  p('When the COVID-19 pandemic began, the City announced a plan to protect vulnerable New Yorkers during heat waves. The plan called for providing over 74,000 air conditioners to seniors whose income was below 60 percent of the state median income and did not have air conditioning at home.'),
-                  p('As part of its COVID-19 response and to help ensure an equitable recovery, the City also created the Taskforce on Racial Inclusion & Equity. The taskforce has worked on issues such as expanding access to food programs in underserved communities.')
-                ),
-                box(
-                  title = '2.11 | The Role of NYC Opportunity',
-                  collapsible = TRUE,
-                  collapsed = TRUE,
-                  width = 12,
-                  status = 'primary',
-                  solidHeader = TRUE,
-                  p('NYC Opportunity was created more than a decade ago with the mission of using evidence and innovation to reduce poverty and increase equity. Located within the Mayor’s Office, the agency works to improve the systems of government by advancing the use of research, data, and design in program and policy development; service delivery; and budget decisions. Its work includes analyzing existing anti-poverty approaches, developing new strategies, facilitating the sharing of data across City agencies, and rigorously assessing the impact of key initiatives. NYC Opportunity manages a discrete fund and collaboratively works with City agencies to design, test, and oversee new programs and digital products.'),
-                  p('The agency manages a portfolio of initiatives it has developed with its partners and directly oversees, and it offers a variety of services to City agencies to promote data-driven, evidence-based policymaking. The office’s work ranges across five interrelated disciplines: research, service design, digital products, data integration, and programs and evaluations.'),
-                  p('This poverty report, which was prepared by the NYC Opportunity poverty research team, is a central part of the agency’s research agenda. In 2013, the New York City Charter was revised to require that the mayor issue an annual report on poverty in the city. This report fulfills that mandate, employing a New York City-specific poverty measure created by the agency’s Poverty Research Unit, the NYCgov measure, which more accurately captures poverty in the city than the federal measure.'),
-                  p('Many of the initiatives discussed in this chapter have been launched, funded, or overseen by NYC Opportunity in partnership with other parts of City government or on its own. The agency’s Service Design Studio and Product Team designed the ACCESS NYC digital tool and continue to operate it. It has played a significant role in CUNY ASAP, Jobs-Plus, Advance & Earn, the Restaurant Revitalization Program, Connections to Care, and Working NYC, among other programs.'),
-                  p('NYC Opportunity has also worked on many other anti-poverty and equity initiatives not discussed above. Its Service Design Studio created Designing for Opportunity, a program that invites City agencies to propose collaborative projects that bring Studio designers and agency staff together to use service design methods to address poverty-related challenges. The Product team, in partnership with several City agencies, launched the Social Service Location Data initiative, which released a database of verified service delivery locations for contracted social services. It is an important tool for assessing whether the City is equitably delivering services to all communities.'),
-                  p('NYC Opportunity is deeply involved in the City’s equity work. Its office, alongside the Mayor’s Office of Operations, has helped to implement EO 45, working with City agencies to identify inequities and develop plans for addressing them. It also produces the Social Indicators and Equity Report, and helped to create and maintain EquityNYC.')
-                ),
-                tags$strong('Past Success and Future Challenges'),
-                p('This report shows that in 2019, the New York City government poverty and near poverty rates were at their lowest levels since 2005 – the first year captured by the poverty measure. These rates support the idea that the anti-poverty policies and programs put in place by the de Blasio administration have been effective in moving New Yorkers out of poverty and near poverty – and keeping them out.'),
-                p('The poverty and near poverty rates reflect an earlier New York City, before COVID-19 arrived and had a devastating impact on residents’ health and economic well-being. Next year’s poverty report will be the first to show the impact of COVID-19 on poverty in New York City. Nevertheless, this year’s report offers some enduring lessons about poverty in the city, including the significant inequities that exist. It also points to strategies for combatting poverty, which remain relevant today.'),
-                p('Future reports may show backsliding on poverty and near poverty as a result of the economic impact of COVID-19. They will also, however, reflect new anti-poverty measures implemented at the federal level starting in 2021, including significant financial support for children in poverty. Given the disproportionate impact of COVID-19, in the coming years the City will need to intently focus on communities that faced the brunt of pandemic-related job losses, and leverage the significant new resources from the federal government in order to return to the steady declines in poverty reflected in this year’s report.')
-                )
-      ),
+      # tabItem("report_policy_path",
+      #         fluidPage(
+      #           h1("2 | Policy & Path"),
+      #           p('This is the final poverty report issued by the de Blasio administration. As such, it provides an opportunity to look back on the poverty policy of two mayoral terms and its impact. This year’s report shows a decline in poverty and near poverty. The New York City Government (NYCgov) poverty rate fell from 20.2 percent to 17.9 percent from 2014 to 2019, a statistically significant change. The rate for 2019 is the lowest since the start of the de Blasio administration and, in fact, the lowest rate going back to 2005 – the first year captured by the poverty measure. As of 2019, there were 521,000 fewer people in poverty or near poverty than if rates had remained at their 2013 levels. The decline reflects how increases in the minimum wage, rising labor market participation, and the many policies implemented during the de Blasio administration improved the economic well-being of low-income New Yorkers.'),
+      #           p('This year’s report represents a snapshot of poverty and near poverty in New York City before the COVID-19 pandemic arrived in early 2020, so it must be viewed within that context. It nevertheless contains important lessons about the current state of poverty. The report also considers how, as conditions improve and the City reopens (with an infusion of federal help from the American Rescue Plan Act of 2021 that includes significant aid to city governments), it can recover from the negative economic impact of COVID-19.'),
+      #           p('Poverty rates have declined significantly for most demographic groups during this administration’s two terms, as Table 2.1 shows by comparing 2014 and 2019 rates.'),
+      #           h2('Table 2.1: NYCgov Poverty Rates for Persons, by Demographic Characteristic, 2014 and 2019'),
+      #           p('This report includes information on the poverty gap – the amount of money needed to lift all families over the poverty threshold if the funds were perfectly targeted. The overall gap, $6.5 billion in 2019, did not change compared to 2014. But the gap for families with children and for single, nonelderly adults living alone or with unrelated individuals showed statistically significant declines from 2014 to 2019. See Table 2.2.'),
+      #           h2('Table 2.2: NYCgov Poverty Gap, 2014–2019'),
+      #           box(
+      #             title = '2.1 | Jobs and Increased Wages',
+      #             collapsible = TRUE,
+      #             collapsed = TRUE,
+      #             width = 12,
+      #             status = 'primary',
+      #             solidHeader = TRUE,
+      #             p('One of the main lessons from the poverty data going back to 2014 is, not surprisingly, that well-paying jobs play a critical role in lifting people out of poverty and keeping them out. In particular, NYCgov data in this report and reports issued during the de Blasio administration show that the minimum wage has been one of the most powerful forces in moving people above the poverty line and keeping them there.'),
+      #             p('New York State sets the minimum wage in New York City, but the City aggressively worked with the State legislature to raise it through a multi-year phase-in. An increase in the minimum wage to $15 was a centerpiece of the City’s goal of moving 800,000 New Yorkers out of poverty or near poverty between 2013 and 2025. The minimum wage in the city, which was just $7.25 in 2013, rose to $15 for employers with 11 or more workers on the last day of 2018. It rose to $15 for smaller employers on the last day of 2019. That means the data in this year’s report are the first in which all but the smallest employers in the city were paying a minimum wage of $15. Between 2013 and 2019 the poverty threshold rose 16 percent, so New Yorkers benefiting from higher wages and a strong job market also contended with greater expenses. Even so, the actual number of people moved out of poverty or near poverty through the first year of the $15 minimum wage is about 521,000 – a population that would constitute the 35th largest city in the United States and more than the total number of residents of Miami or Atlanta, for instance.'),
+      #             p('The minimum wage reached $15 in a peak year for the job market. By 2019 employment had regained and surpassed jobs lost throughout the Great Recession, and it was a year before the COVID-19-related shutdown occurred. The $15 minimum wage appeared to have no notable impact on employment demand. Labor force participation rose over 5 percent from 2014 to 2019, with more workers engaged in full-time, year-round employment. Wages defining the bottom decile of the labor force grew by over $3,000. These two factors – wage growth and employment opportunity – were core drivers of the declining poverty rate.'),
+      #             p('The City also promoted increased wages in other ways. It has raised wages for its own workforce, nonprofit contracted vendors, and childcare workers. Although many of the workers who benefited from these wage increases were already above poverty or near poverty, in other cases the increases helped to lift families out of poverty or near poverty and into more stable, self-sufficient economic circumstances.'),
+      #             p('In April 2014 the City’s Earned Sick Time Act took effect, requiring many employers in New York City to provide employees with paid sick leave. By requiring employers to pay New Yorkers for days they take off to care for themselves or a family member, the law has increased take-home pay for many. The City has also established a program of free, high-quality universal pre-K and greatly expanded free 3-K. In addition to providing vitally important early childhood education, these programs increase wages in working families by freeing up parents to work more hours without having to pay for childcare.'),
+      #             p('The City has also promoted increased earnings through increased job creation. It has engaged in a wide range of efforts to foster economic development and the expansion of good jobs. In August 2020, the City announced a pledge by 27 of New York City’s largest employers, made in coordination with the Mayor’s Office, to create 100,000 jobs for low-income members of the Black, Latinx, and Asian communities by 2030. As part of this commitment, the New York Jobs CEO Council, a newly created nonprofit group, said it would partner with the City University of New York (CUNY) and the New York City Department of Education (DOE), with the aim of hiring at least 25,000 students by directing them to entry-level jobs, apprenticeships, and work-based learning opportunities.'),
+      #             p('The City looks to job training as an important tool for lifting New Yorkers out of poverty. The City has invested heavily in Jobs-Plus, a proven, place-based employment program for residents of New York City Housing Authority (NYCHA) developments that focuses on providing employment-related services, creating financial incentives that “make work pay,” and promoting community support for work. The City offers other job training programs, including Advance & Earn, a training and employment program for youth between the ages of 16 and 24. The City additionally has significantly expanded the number of slots in the decades-old Summer Youth Employment Program (SYEP) and launched the NYC Center for Youth Employment, a first-of-its-kind office designed to bring focus, rigor, and coordination to helping young people prepare for career success.'),
+      #             p('The City has an array of other initiatives designed to help New Yorkers find well-paying employment. In February 2019, it launched the Disconnected Youth Task Force to examine the obstacles faced by young people between the ages of 16 and 24 who are out of work and not in school. The City also recently launched WorkingNYC, a one-stop online portal that directs New Yorkers to jobs, job training, and educational opportunities.')
+      #             ),
+      #           box(
+      #             title = '2.2 | Affordable Housing',
+      #             collapsible = TRUE,
+      #             collapsed = TRUE,
+      #             width = 12,
+      #             status = 'primary',
+      #             solidHeader = TRUE,
+      #             p('The availability of affordable housing is another important factor in determining whether New Yorkers live above the poverty line. It is especially important in the city because of the high cost of housing compared to other parts of the country, and the large percentage of income New York City households spend on housing. Housing supports that range from public housing to rent regulated units consistently lower the poverty rate by freeing up family resources to meet other needs. The effect has been to lower the poverty rate in the range of approximately 5.5 to 6.6 percentage points in a given year.'),
+      #             p('The City has made a strong commitment to increasing the availability of affordable housing. When Mayor de Blasio took office in 2014, he launched Housing New York with the ambitious goal of creating or preserving 200,000 affordable homes and apartments in ten years. In November 2017, the administration announced it would meet that goal two years early, and launched Housing New York 2.0, a roadmap to a new goal of creating or preserving 300,000 houses or apartments by 2026. Housing New York 2.0 included new initiatives to help New Yorkers buy a first home, afford their rent, and stay in their neighborhoods. In January 2020, the City launched a third phase of Housing New York, YOUR Home NYC, with new initiatives to build and preserve affordable housing, protect renters, and create neighborhood wealth.'),
+      #             p('The City has also focused on helping New Yorkers who have housing to remain in it, since the loss of a home often contributes to a family or individual moving into poverty. In August 2017, the mayor signed a law creating a right to counsel in eviction cases, which has given New Yorkers an important new weapon to ward off eviction and possible homelessness. In January 2019, the mayor established the Mayor’s Office to Protect Tenants by executive order, which coordinates an array of tenant-protection efforts. The City’s Department of Social Services (DSS) operates a program that extends emergency rental assistance to families and individuals at risk of being evicted. In addition, the City launched its first-ever NYC Tenant Resource Portal, an online resource to help New Yorkers who rent their homes to access free City resources to prevent evictions.'),
+      #             p('The City also ramped up efforts to address homelessness, which remains a stubborn problem. It launched the HOME-STAT program, which sends canvassing teams out to identify homeless New Yorkers and connect them with homeless outreach staff who can address their housing and social service needs. Another program, One Shot Deal, extends one-time emergency grants to help New Yorkers facing unexpected circumstances to remain in their housing or assist them in moving into new housing. The City also operates CityFHEPS, a voucher program that helps New Yorkers experiencing homelessness to obtain permanent housing.')
+      #           ),
+      #           box(
+      #             title = '2.3 | Benefits',
+      #             collapsible = TRUE,
+      #             collapsed = TRUE,
+      #             width = 12,
+      #             status = 'primary',
+      #             solidHeader = TRUE,
+      #             p('For many New Yorkers, government benefits of all kinds make the difference between living above the poverty line or below it. For example, combined tax credits such as the Earned Income Tax Credit (EITC) or the Child Tax Credit lower poverty an average of 3 percentage points. Supplemental Nutrition Assistance Program (SNAP) benefits have a similar effect.'),
+      #             p('The City has launched an array of initiatives designed to make it easier for New Yorkers to learn which benefits they qualify for and apply for them. NYC Opportunity updated ACCESS NYC, a digital tool that allows people to easily check their potential eligibility for over 30 federal, New York State, and New York City benefits. Available in over ten languages, the site provides information on how programs work, what documentation is required, how to apply online, and how to receive help. HRA also launched ACCESS HRA, available as a website and as a mobile app, which allows New Yorkers to apply for SNAP and Cash Assistance and regularly check the status of their benefits.'),
+      #             p('The City also introduced an array of reforms that removed obstacles to obtaining benefits. Clients previously were required to “work off” their benefits through the Work Experience Program (WEP) at City and nonprofit agencies. The City eliminated WEP and instead offers new opportunities for subsidized jobs, internships, and education and trainings oriented toward building career pathways.'),
+      #             p('The City has transformed Cash Assistance procedures to reduce unnecessary office visits. This allows clients to submit recertification questionnaires online and submit documents from a smartphone. The City has also put in place new protocols to prevent unnecessary case closings, which required clients to request a State fair hearing to reopen their case. With the new protocols, State fair hearing challenges declined by more than 47 percent.'),
+      #             p('On the policy level, the City has been a strong advocate for increased benefits. In June 2020, the mayor and the City’s Corporation Counsel joined a coalition of state attorneys general in urging Congress to block Trump administration efforts to cut SNAP benefits. In January 2021, President Biden signed an executive order that increased the amount of SNAP benefits people are eligible for, which applied to very low-income households in particular.'),
+      #             p('The City also successfully advocated for a change in State law that permits clients to obtain a college degree while receiving benefits. Participation in a four-year college program was not a permissible employment activity for clients before the change – a limitation that cut many off from degrees that would greatly improve their ability to earn a living wage.')
+      #           ),
+      #           box(
+      #             title = '2.4 | Education',
+      #             collapsible = TRUE,
+      #             collapsed = TRUE,
+      #             width = 12,
+      #             status = 'primary',
+      #             solidHeader = TRUE,
+      #             p('Education is one of the most powerful tools for moving people out of poverty. Extensive data show a strong correlation between education levels and living above the poverty line. It is consistently found that an individual with less than a high school degree is four times more likely to be poor than an individual with a bachelor’s degree or higher. Gaining a high school degree lowers that risk to three times more likely to be poor. The City has heavily invested in initiatives to increase access to education at all levels. New York City has been a national leader in universal pre-K and 3-K, expanding free, high-quality early childhood education, which is shown to be strongly associated with success later in life, including economic success.'),
+      #             p('At the elementary and middle-school levels, the City’s Equity and Excellence for All initiative has introduced an array of improvements and reforms. The City placed reading coaches in every elementary school and continued to expand access to bilingual and dual-language programs.'),
+      #             p('The City has also introduced high school-level programs to increase student access to higher education and their marketable technical skills. It launched the Computer Science for All initiative as part of its Equity and Excellence for All agenda to ensure that all City schools can provide equitable computer science learning experiences to their students. The City’s AP for All initiative similarly brings advanced placement (AP) courses to schools that offer few or no AP courses. In 2018, the City had its highest ever number of students taking and passing AP exams.'),
+      #             p('At the college level, CUNY’s Accelerated Study in Associate Programs (ASAP) has a proven record of helping low-income students remain in school and obtain associate degrees. Since the program’s inception, 14 CUNY ASAP cohorts have totaled 70,000 students admitted across an array of CUNY colleges. Its current three-year graduation rate is 53 percent versus 24 percent for similar students not enrolled in the program. In 2015, NYC Opportunity provided support for Accelerate, Complete, and Engage (ACE), a program similar to CUNY ASAP that supports students pursuing baccalaureate degrees.')
+      #           ),
+      #           box(
+      #             title = '2.5 | Equity',
+      #             collapsible = TRUE,
+      #             collapsed = TRUE,
+      #             width = 12,
+      #             status = 'primary',
+      #             solidHeader = TRUE,
+      #             p('The data in this report, and reports issued over the past two mayoral terms, show that people of color are disproportionately likely to live in poverty and have difficulty rising out of it. The disparities are stubbornly persistent. Poverty rates fell from 2014 to 2019 for all the racial and ethnic groups regularly tracked in this report. But these declines were slow, few significant year-over-year changes exist, and significant changes only appear when measured over the longer term.'),
+      #             p('Even as poverty rates fell, the differences between groups remain. In any given year Hispanic poverty rates are nearly double that of rates for Whites. The average differences in rates for Blacks (nearly 65 percent higher) and Asians (just over 75 percent higher) are also notable. For this reason, racial equity is a critical part of the City’s work to reduce poverty. The City has launched a wide range of initiatives to address racial and other disparities.'),
+      #             p('In May 2019, the mayor signed Executive Order 45 (EO 45), which expanded the City’s focus on equity in its own operations and across New York City. EO 45 directs City agencies to identify disparities in their work based on income, race/ethnicity, gender, and other factors. Agencies are required to develop plans to address identified disparities.'),
+      #             p('To reduce inequity, it is important to know where it exists. To this end, the City has significantly increased the amount and quality of information available on disparities of all kinds. It has published a Social Indicators Report since 2016, which provides a snapshot of social and economic conditions across the City. In 2019, the report was redesigned as the Social Indicators and Equity Report, with significantly more data on disparities by race, gender, income, and other factors. In February 2021, the City launched EquityNYC, a website that presents the data in a highly accessible online format.'),
+      #             p('The City has also promoted equity by increasing its support for Minority and Women-Owned Businesses (M/WBEs). In OneNYC, the blueprint for New York City’s future, the City set a goal of awarding nearly $16 billion out of $25 billion in contracts to M/WBEs by 2020; as of mid-2020 it was running ahead of schedule.'),
+      #             p('In July 2020, the mayor signed an executive order to strengthen M/WBEs. He also announced new initiatives with the Taskforce on Racial Inclusion and Equity to help Black and Latinx entrepreneurs connect with business opportunities, including government contracts.'),
+      #             p('The City has an array of specialized programs designed to promote equity in specific areas. These include NYC Men Teach, the nation’s most ambitious effort to diversify the teaching pipeline. It has a goal of recruiting and retaining 1,000 additional men of color to teach in New York City schools, where less than 8 percent of teachers are men of color.')
+      #           ),
+      #           box(
+      #             title = '2.6 | Immigrant Assistance',
+      #             collapsible = TRUE,
+      #             collapsed = TRUE,
+      #             width = 12,
+      #             status = 'primary',
+      #             solidHeader = TRUE,
+      #             p('The data in this report show that New York City’s immigrants are disproportionately likely to live in poverty. The non-citizen poverty rate fell 5 percentage points from 2014 to 2019, but remains 6 percentage points higher than the poverty rate for native-born citizens. This aligns with the wealth of evidence showing that there are strong economic benefits to obtaining citizenship status. One study sponsored by the Mayor’s Office of Immigrant Affairs (MOIA) found that with naturalization, individual annual earnings increase by an average of 8.9 percent, the employment rate rises 2.2 percentage points, and homeownership increases 6.3 percentage points.1 Starting in 2018, NYC Opportunity began to issue reports specifically analyzing poverty among immigrants in the city. The agency’s “An Economic Profile of Immigrants in New York City”2 provides data and analysis that can help City policymakers identify where poverty exists in immigrant communities and develop strategies for addressing it.'),
+      #             p('MOIA, the City office dedicated to supporting and empowering immigrants, offers an array of programs designed to help immigrants economically succeed. ActionNYC offers all New Yorkers free immigration legal help. It works through a network of trusted community-based organizations (CBOs), delivering its services in public schools, public health facilities, and other CBOs. It also operates a toll-free hotline where immigrants can ask questions and be connected to free and safe legal help. Another program, NYCitizenship, provides free legal help with citizenship applications at select New York Public Library branches.'),
+      #             p('IDNYC, the nation’s most robust municipal ID program, has been of particular help to immigrant New Yorkers. The free identification card, which is issued without regard to immigration status, helps New Yorkers access a wide variety of vital services, including banking; employment; access to public buildings, including schools; and public benefits.')
+      #           ),
+      #           box(
+      #             title = '2.7 | Health and Well-being',
+      #             collapsible = TRUE,
+      #             collapsed = TRUE,
+      #             width = 12,
+      #             status = 'primary',
+      #             solidHeader = TRUE,
+      #             p('Health difficulties are a significant factor that can move people into poverty and keep them there due to the costs associated with being ill, and the fact that illness can interfere with their ability to earn. Out-of-pocket medical spending consistently adds approximately 3 percentage points to the poverty rate.'),
+      #             p('The City has taken a bold stand for universal health care. In January 2019, the mayor announced plans to guarantee health care for all New Yorkers. The initiative was designed to serve the 600,000 New Yorkers who lacked insurance by strengthening MetroPlus, the City’s public health insurance option. The initiative also launched NYC Care, a new program that guarantees anyone eligible for insurance, including undocumented immigrants, direct access to NYC Health + Hospitals physicians, pharmacies, and mental health and substance abuse services.'),
+      #             p('The City has other targeted health initiatives. In July 2018, it launched a comprehensive, four-point program to reduce maternal deaths and life-threatening complications from childbirth among women of color. These maternal mortality rates and the racial disparities within them remain an ongoing challenge. The City announced it would invest $12.8 million in the plan over the next three years, including implicit bias training for private and public health care providers, support for private and public hospitals to enhance data tracking and analysis of maternal mortality events, and other measures.'),
+      #             p('The City has also made mental health a priority through the ThriveNYC initiative. Connections to Care (C2C), a part of ThriveNYC, integrated mental health support into the work of CBOs that serve at-risk and low-income communities across the city. C2C CBOs work with mental health providers who train and coach staff to screen for mental health needs, and either offer clients direct support or connect them with local health care providers. A preliminary program evaluation found that most participants were from ethnic minority backgrounds, with over half reporting incomes of less than $5,000 – an indication that C2C was reaching its intended target population.')
+      #           ),
+      #           box(
+      #             title = '2.8 | Broadband Access',
+      #             collapsible = TRUE,
+      #             collapsed = TRUE,
+      #             width = 12,
+      #             status = 'primary',
+      #             solidHeader = TRUE,
+      #             p('In today’s digital economy, broadband access is important to financial success. The internet is a vital tool for accessing job opportunities, pursuing education, and starting businesses. In January 2020, the City announced its NYC Internet Master Plan, a bold vision for affordable, high-speed, reliable broadband service throughout the five boroughs. The City has promoted broadband access in a variety of ways, with a particular focus on marginalized communities and low-income New Yorkers. In April 2020, the City announced it would provide tablets and internet access to 10,000 seniors in public housing. This $5 million program was designed to reduce isolation among older New Yorkers and help them access information about COVID-19.'),
+      #           ),
+      #           box(
+      #             title = '2.9 | Climate Change',
+      #             collapsible = TRUE,
+      #             collapsed = TRUE,
+      #             width = 12,
+      #             status = 'primary',
+      #             solidHeader = TRUE,
+      #             p('Global climate change has a negative financial impact, particularly on economically vulnerable households. The City has launched or expanded a number of programs designed to help low-income New Yorkers handle the costs associated with rising temperatures, increased flooding, and other effects of climate change. NYC Opportunity’s poverty research team has conducted research and provided input for several climate-related projects. The team participated in a working group that explored affordable flood insurance for homeowners and renters in coastal areas. It also assisted a successful effort to increase utility company energy subsidies to low- income households, based on an updated measure of the burden of household energy costs.'),
+      #           ),
+      #           box(
+      #             title = '2.10 | COVID-19 Response',
+      #             collapsible = TRUE,
+      #             collapsed = TRUE,
+      #             width = 12,
+      #             status = 'primary',
+      #             solidHeader = TRUE,
+      #             p('This year’s report covers a period before the COVID-19 pandemic. It should be noted that when COVID-19 hit New York City in early 2020, the City rapidly and forcefully responded to both the health threat and the extensive economic impact. NYC Opportunity’s poverty research team has analyzed U.S. Census Bureau Pulse Data to assess the financial impact of COVID-19. It has found widespread job and income losses in the city with some groups particularly hard hit, including workers with a high school education or less and Asian workers.3 It also found that the COVID-19 crisis was having a disproportionately large economic impact on women.'),
+      #             p('The City immediately implemented Get Food NYC, a free food distribution program that included grab-and-go meals at New York City schools. The program was available to all children and adults in need, and included emergency home food distribution. The City appointed a COVID-19 Food Czar to coordinate multi-agency efforts. By late September 2020, the Food Czar’s operation had distributed more than 135 million meals to hungry and food-insecure New Yorkers. At the time, it delivered approximately 400,000 meals a day through its Emergency Food Delivery program, which brought meals to homebound low-income New Yorkers. It also served an additional 450,000 grab-and-go meals daily at over 400 New York City school locations.'),
+      #             p('The City launched initiatives to help small businesses and their employees affected by the pandemic, including a small business relief program that made loans available to small businesses affected by COVID-19. The Open Restaurants program allowed restaurants to establish outdoor dining on public roadways and sidewalks. The City also established a Restaurant Revitalization Program, which provides funds to restaurants to pay unemployed and under-employed workers affected by the COVID-19 crisis.'),
+      #             p('When the COVID-19 pandemic began, the City announced a plan to protect vulnerable New Yorkers during heat waves. The plan called for providing over 74,000 air conditioners to seniors whose income was below 60 percent of the state median income and did not have air conditioning at home.'),
+      #             p('As part of its COVID-19 response and to help ensure an equitable recovery, the City also created the Taskforce on Racial Inclusion & Equity. The taskforce has worked on issues such as expanding access to food programs in underserved communities.')
+      #           ),
+      #           box(
+      #             title = '2.11 | The Role of NYC Opportunity',
+      #             collapsible = TRUE,
+      #             collapsed = TRUE,
+      #             width = 12,
+      #             status = 'primary',
+      #             solidHeader = TRUE,
+      #             p('NYC Opportunity was created more than a decade ago with the mission of using evidence and innovation to reduce poverty and increase equity. Located within the Mayor’s Office, the agency works to improve the systems of government by advancing the use of research, data, and design in program and policy development; service delivery; and budget decisions. Its work includes analyzing existing anti-poverty approaches, developing new strategies, facilitating the sharing of data across City agencies, and rigorously assessing the impact of key initiatives. NYC Opportunity manages a discrete fund and collaboratively works with City agencies to design, test, and oversee new programs and digital products.'),
+      #             p('The agency manages a portfolio of initiatives it has developed with its partners and directly oversees, and it offers a variety of services to City agencies to promote data-driven, evidence-based policymaking. The office’s work ranges across five interrelated disciplines: research, service design, digital products, data integration, and programs and evaluations.'),
+      #             p('This poverty report, which was prepared by the NYC Opportunity poverty research team, is a central part of the agency’s research agenda. In 2013, the New York City Charter was revised to require that the mayor issue an annual report on poverty in the city. This report fulfills that mandate, employing a New York City-specific poverty measure created by the agency’s Poverty Research Unit, the NYCgov measure, which more accurately captures poverty in the city than the federal measure.'),
+      #             p('Many of the initiatives discussed in this chapter have been launched, funded, or overseen by NYC Opportunity in partnership with other parts of City government or on its own. The agency’s Service Design Studio and Product Team designed the ACCESS NYC digital tool and continue to operate it. It has played a significant role in CUNY ASAP, Jobs-Plus, Advance & Earn, the Restaurant Revitalization Program, Connections to Care, and Working NYC, among other programs.'),
+      #             p('NYC Opportunity has also worked on many other anti-poverty and equity initiatives not discussed above. Its Service Design Studio created Designing for Opportunity, a program that invites City agencies to propose collaborative projects that bring Studio designers and agency staff together to use service design methods to address poverty-related challenges. The Product team, in partnership with several City agencies, launched the Social Service Location Data initiative, which released a database of verified service delivery locations for contracted social services. It is an important tool for assessing whether the City is equitably delivering services to all communities.'),
+      #             p('NYC Opportunity is deeply involved in the City’s equity work. Its office, alongside the Mayor’s Office of Operations, has helped to implement EO 45, working with City agencies to identify inequities and develop plans for addressing them. It also produces the Social Indicators and Equity Report, and helped to create and maintain EquityNYC.')
+      #           ),
+      #           tags$strong('Past Success and Future Challenges'),
+      #           p('This report shows that in 2019, the New York City government poverty and near poverty rates were at their lowest levels since 2005 – the first year captured by the poverty measure. These rates support the idea that the anti-poverty policies and programs put in place by the de Blasio administration have been effective in moving New Yorkers out of poverty and near poverty – and keeping them out.'),
+      #           p('The poverty and near poverty rates reflect an earlier New York City, before COVID-19 arrived and had a devastating impact on residents’ health and economic well-being. Next year’s poverty report will be the first to show the impact of COVID-19 on poverty in New York City. Nevertheless, this year’s report offers some enduring lessons about poverty in the city, including the significant inequities that exist. It also points to strategies for combatting poverty, which remain relevant today.'),
+      #           p('Future reports may show backsliding on poverty and near poverty as a result of the economic impact of COVID-19. They will also, however, reflect new anti-poverty measures implemented at the federal level starting in 2021, including significant financial support for children in poverty. Given the disproportionate impact of COVID-19, in the coming years the City will need to intently focus on communities that faced the brunt of pandemic-related job losses, and leverage the significant new resources from the federal government in order to return to the steady declines in poverty reflected in this year’s report.')
+      #           )
+      # ),
       
       ## Report: Measuring Poverty ----
       tabItem("report_measuring",
@@ -768,12 +815,11 @@ ui <- dashboardPage(
       ## Data Detail ----
       tabItem(tabName = 'data_detail',
               fluidPage(
-                h1('Data Detail'),
-                h3('How do you compare?'),
-                p('Make your selections below to see what poverty in New York looks like for people like ', tags$strong('you'), ' in 2019!'),
+                h2('How do you compare?'),
+                h5('Make selections below to see what poverty in New York looks like for people like ', tags$strong('you'),'...'),
                 fluidRow(
                   box(
-                    title = 'Income Distribution (2018)',
+                    title = textOutput("age_range"),
                     width = 9,
                     status = 'primary',
                     tabsetPanel(type = "tabs",
@@ -787,7 +833,6 @@ ui <- dashboardPage(
                                          tags$strong('Notes:'),
                                          'Numbers in bold indicate a statistically significant change from prior year. U.S. official poverty rates are based on the NYCgov poverty universe and unit of analysis. See Appendix A for details.')
                     ),
-                    code(textOutput("age_range"))
                   ),
                   box(
                     title = "Options",
@@ -829,9 +874,8 @@ ui <- dashboardPage(
       ## Data Comparison ----
       tabItem(tabName = "data_comparison",
               fluidPage(
-                h1('Data Comparison'),
-                h3('Drill down into the data...'),
-                p('Make your selections below to better understand what poverty looks like based on multiple parameters you can select.'),
+                h2('Drill down into the data...'),
+                p('Make selections below to better understand what poverty looks like for different populations.'),
                 hr(),
                 fluidRow(
                   box(
@@ -840,35 +884,48 @@ ui <- dashboardPage(
                     status = 'primary',
                     column(4,
                            selectizeInput("checkbox_data_comparison_year", 
-                                          label = "Select year(s)", 
-                                          choices = c("2016" = 2016, 
+                                          label = "Year(s)", 
+                                          choices = c("2005" = 2005,
+                                                      "2006" = 2006, 
+                                                      "2007" = 2007,
+                                                      "2008" = 2008, 
+                                                      "2009" = 2009,
+                                                      "2010" = 2010, 
+                                                      "2011" = 2011,
+                                                      "2012" = 2012, 
+                                                      "2013" = 2013,
+                                                      "2014" = 2014, 
+                                                      "2015" = 2015,
+                                                      "2016" = 2016, 
                                                       "2017" = 2017, 
                                                       "2018" = 2018),
-                                          selected = 2016,
+                                          selected = 2018,
                                           multiple = TRUE),
                            selectizeInput(
                              inputId = 'selectize_data_comparison_pop_characteristics',
-                             label = 'Sub-Population',
+                             label = 'Grouping(s)',
                              choices = c(
-                               'Age' = 'Age_Categ',
+                               'Age' = 'AgeCateg',
                                'Borough' = 'Boro',
                                'Disability' = 'DIS',
                                'Educational Attainment' = 'EducAttain',
                                'Ethnicity' = 'Ethnicity',
                                'Housing Status' = 'TEN',
+                               'Job Sector' = 'NAICSP',
                                'Sex' = 'SEX'
                              ),
                              selected = 'Boro',
                              multiple = TRUE
-                           )
+                           ),
+                           checkboxInput("data_comp_filter_checkbox", label = "Remove unreliable data", value = TRUE)
                     ),
                     
                     column(8,
                            markdown("
                                     #### Note
-                                    - Grayed out rows indicate an unreliable estimate due to low sample size
-                                    - `Count` is a weighted value
-                                    - Click on an option and press delete to remove them from the data table
+                                    - Rows with a `red background` are unreliable estimates due to low sample size
+                                    - **Count** is a weighted value
+                                    - Click on a selected option and press *delete* to remove them from the data table
                                     - You can sort the table by any column by clicking on the header
                                     ")
                     )
@@ -887,11 +944,25 @@ ui <- dashboardPage(
                   )
                 )
             ),
-      ## Data Policy ----
-      tabItem(tabName = "data_policy",
+      ## Data Map ----
+      tabItem(tabName = "data_map",
               fluidPage(
-                h1('Data Policy'),
-                h3('What would happen to poverty in NYC under alterntive policies?')
+                h3('Neighborhood Info'),
+                box(label = NULL,
+                    status = 'primary',
+                    width = 12,
+                    column(
+                      width = 3,
+                      sliderInput("data_map_year_slider", label = "Select Year(s)",
+                                  min = 2005, max = 2018,
+                                  value = c(2015, 2018), sep='', ticks = FALSE)
+                    ),
+                    column(
+                      width = 9,
+                      leafletOutput('data_map', height="70vh")
+                    )
+                    
+                )
               )
       )
       
@@ -929,13 +1000,18 @@ server <- function(input, output) {
                                                "}")))
   
   ## Report ----
+  # 1.1 Title
+  output$report_keyfindings_plot_1_1_title <- renderText({
+    paste0('NYCgov and Official Poverty Rates | ', as.character(input$slider_1_1[1]),
+           '-', as.character(input$slider_1_1[2]))
+  })
   
   # 1.1 Create datatable
   df_1_1 <- reactive({
       df %>%
       filter(year>=input$slider_1_1[1] & year<=input$slider_1_1[2]) %>% # year range
-      select(year, PWGTP, Off_Pov_Stat, NYCgov_Pov_Stat) %>%
-      gather(measure, status, Off_Pov_Stat:NYCgov_Pov_Stat) %>%
+      select(year, PWGTP, Off_Pov_Stat_num, NYCgov_Pov_Stat_num) %>%
+      gather(measure, status, Off_Pov_Stat_num:NYCgov_Pov_Stat_num) %>%
       group_by(year, measure) %>%
       summarise(
         percentage = round(sum((PWGTP*status)) / sum(PWGTP) * 100, 2),
@@ -953,8 +1029,7 @@ server <- function(input, output) {
       geom_ribbon(aes(ymin=percentage-plot_ci*se, ymax=percentage+plot_ci*se),
                   alpha = 0.2, colour = NA) +
       scale_x_continuous(breaks=unique(df$year)) +
-      labs(#title = paste0("NYCgov Poverty Rates by ", input$select_1_2_options),
-        x = 'Year', y = 'Percentage (%)')   +
+      labs(x = 'Year', y = 'Percentage (%)')   +
       scale_fill_discrete(name = "Poverty Measure", labels = c("NYCgov", "Official")) +
       scale_colour_discrete(name = "Poverty Measure", labels = c("NYCgov", "Official")) +
       theme_minimal() +
@@ -971,6 +1046,12 @@ server <- function(input, output) {
       buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
       )
     )
+  
+  # 1.2 Title
+  output$report_keyfindings_plot_1_2_title <- renderText({
+    paste0('NYCgov and Official Poverty Thresholds | ', as.character(input$slider_1_2[1]),
+           '-', as.character(input$slider_1_2[2]))
+  })
   
   # 1.2 Create Datatable
   df_1_2 <- reactive({
@@ -1009,68 +1090,85 @@ server <- function(input, output) {
     )
   )
   
-  # Section 1.2
+  # Section 1.2 | Multiplot
+  
+  # Title
+  output$report_multiplot_title <- renderText({
+    paste0('NYCgov Poverty Rates | ', as.character(input$report_keyfindings_multiplot_year_slider[1]),
+           '-', as.character(input$report_keyfindings_multiplot_year_slider[2]))
+  })
+  
+  # Datatable
   section_1_2_fig_3to10 = reactive({
-    if (req(input$select_1_2_options) == 'ethnicity_sex'){
+    if (req(input$report_keyfindings_multiplot_group_select2) != 'None'){
       df %>%
-        group_by(year, SEX, Ethnicity) %>%
+        filter(year>=input$report_keyfindings_multiplot_year_slider[1] & year<=input$report_keyfindings_multiplot_year_slider[1]) %>%
+        group_by(!!!syms(append('year', input$report_keyfindings_multiplot_group_select1,
+                                input$report_keyfindings_multiplot_group_select2))) %>%
         summarise(
-          cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat)) / sum(PWGTP) * 100, 2),
-          se = (sqrt((sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)))) / (n()-1)))*100
-        )
+          cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat_num)) / sum(PWGTP) * 100, 2),
+          se = (sqrt((sum((PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)))) / (n()-1)))*100
+        ) %>%
+        drop_na()
     }
     else{
       df %>%
-        group_by(!!!syms(append('year', input$select_1_2_options))) %>%
+        filter(year>=input$report_keyfindings_multiplot_year_slider[1] & year<=input$report_keyfindings_multiplot_year_slider[2]) %>%
+        group_by(!!!syms(append('year', input$report_keyfindings_multiplot_group_select1))) %>%
         summarise(
           # category percentage
-          cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat)) / sum(PWGTP) * 100, 2),
+          cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat_num)) / sum(PWGTP) * 100, 2),
           # standard error
-          se = (sqrt((sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)))) / (n()-1)))*100
-        )
+          se = (sqrt((sum((PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)))) / (n()-1)))*100
+        ) %>%
+        drop_na()
     }
   })
   
   
   # Section 1.2: 1.3-1.10 Plots
   output$plot_1_2_fig_3to10 <- renderPlot({
-    if (req(input$select_1_2_options) == 'ethnicity_sex'){
-      df %>%
-        group_by(year, SEX, Ethnicity) %>%
-        summarise(
-          cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat)) / sum(PWGTP) * 100, 2),
-          se = (sqrt((sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)))) / (n()-1)))*100
-        ) %>%
-        ggplot(aes(x=year, y=cat_perc, colour=Ethnicity, fill=Ethnicity)) + 
+    if (req(input$report_keyfindings_multiplot_group_select2) != 'None'){
+      # df %>%
+      #   group_by(year, SEX, Ethnicity) %>%
+      #   summarise(
+      #     cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat_num)) / sum(PWGTP) * 100, 2),
+      #     se = (sqrt((sum((PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)))) / (n()-1)))*100
+      #   ) %>%
+        ggplot(section_1_2_fig_3to10(), aes(x=year, y=cat_perc,
+                                            colour=!!sym(input$report_keyfindings_multiplot_group_select1),
+                                            fill=!!sym(input$report_keyfindings_multiplot_group_select1))) + 
         geom_line(aes(x=year)) + geom_point() +
         geom_ribbon(aes(ymin=cat_perc-plot_ci*se, ymax=cat_perc+plot_ci*se), alpha = 0.2, colour = NA) +
         scale_x_continuous(breaks=unique(df$year)) +
-        ggtitle(paste0("Poverty Rates, Race and Ethnicity by Gender")) +
+        #ggtitle(paste0("Poverty Rates, Race and Ethnicity by Gender")) +
         scale_color_brewer(palette="Paired") +
         theme_minimal() +
-        facet_wrap(~SEX, ncol = 1)
+        facet_wrap(~!!sym(input$report_keyfindings_multiplot_group_select2), ncol = 1)
         
     }
     else{
-      df %>%
-        group_by(!!!syms(append('year', input$select_1_2_options))) %>%
-        summarise(
-          # category percentage
-          cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat)) / sum(PWGTP) * 100, 2),
-          # standard error
-          se = (sqrt((sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)))) / (n()-1)))*100
-        ) %>%
-        ggplot(aes(x=year, y=cat_perc,
-                   colour=!!sym(input$select_1_2_options),
-                   fill = !!sym(input$select_1_2_options))) +
+      # df %>%
+      #   group_by(!!!syms(append('year', input$report_keyfindings_multiplot_group_select1))) %>%
+      #   summarise(
+      #     # category percentage
+      #     cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat_num)) / sum(PWGTP) * 100, 2),
+      #     # standard error
+      #     se = (sqrt((sum((PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)))) / (n()-1)))*100
+      #   ) %>%
+      
+        ggplot(section_1_2_fig_3to10(), aes(x=year, y=cat_perc,
+                   colour=!!sym(input$report_keyfindings_multiplot_group_select1),
+                   fill = !!sym(input$report_keyfindings_multiplot_group_select1))) +
         geom_line(aes(x=year)) + geom_point() +
         geom_ribbon(aes(ymin=cat_perc-plot_ci*se, ymax=cat_perc+plot_ci*se),
                     alpha = 0.2, colour = NA) +
         scale_x_continuous(breaks=unique(df$year)) +
-        labs(#title = paste0("NYCgov Poverty Rates by ", input$select_1_2_options),
+        labs(title = paste0('NYCgov Poverty Rates | ', as.character(input$report_keyfindings_multiplot_year_slider[1]),
+                            '-', as.character(input$report_keyfindings_multiplot_year_slider[2])),
              x = 'Year', y = 'Percentage (%)') +
         theme_minimal() +
-        theme(legend.title = element_blank(), text=element_text(size=14))
+        theme(text=element_text(size=14))
     }
   })
   
@@ -1128,7 +1226,6 @@ server <- function(input, output) {
     # what is the poverty threshold for this group
     # add number of kids?
     poverty = mean(df_detail$NYCgov_Threshold)
-    print(poverty)
     near_poverty = poverty * 1.5
     
     incomes = df_detail %>%
@@ -1159,15 +1256,16 @@ server <- function(input, output) {
       geom_line() + 
       geom_ribbon(aes(ymin=0, ymax=y, fill=quant)) + 
       scale_x_continuous(labels = scales::comma) + 
-      scale_fill_brewer(guide="none") +
+      scale_fill_brewer(guide="legend", labels = c('In Poverty', 'Near-Poverty', 'Not in Poverty')) +
       scale_x_continuous(label=scales::comma, limits=c(0, 200000)) + 
-      xlab('Income') +
+      xlab('2018 Income ($)') +
       ylab('Proportion') +
       geom_label(data=annotation, aes( x=x, y=y, label=label),
                  #color="orange", 
                  size=3.5 , angle=45, fontface="bold" ) +
       theme_classic() +
-      theme(axis.text.y = element_blank(), text=element_text(size=14))
+      theme(legend.position=c(0.9,0.9), legend.title = element_blank(),
+            axis.text.y = element_blank(), text=element_text(size=14))
   })
   
   # Alt plot
@@ -1175,66 +1273,81 @@ server <- function(input, output) {
   
   ## Data Comparison ----
   # color palette: https://coolors.co/d9ed92-b5e48c-99d98c-76c893-52b69a-34a0a4-168aad-1a759f-1e6091-184e77
-  color_palette = c('#d9ed92', '#b5e48c', '#99d98c', '#76c893', '#52b69a',
-                    '34A0A4', '#168AAD', '#1A759F', '#1E6091', '#184E77')
+  color_palette = c('#d9ed9285', '#b5e48c85', '#99d98c85', '#76c89385', '#52b69a85',
+                    '#34A0A485', '#168AAD85', '#1A759F85', '#1E609185', '#184E7785')
 
   comparison_df = reactive({
     validate(
       need(input$checkbox_data_comparison_year, 'Select at least one year'),
       need(input$selectize_data_comparison_pop_characteristics != '', 'Choose comparison dimensions')
     )
-    
-    dt = filter(df, year == input$checkbox_data_comparison_year) %>%
+
+    dt = filter(df, year %in% input$checkbox_data_comparison_year) %>%
       # this is making it take the list as var names (below)
       group_by(!!!syms(append('year', input$selectize_data_comparison_pop_characteristics))) %>%
-      summarise(cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat)) / sum(PWGTP) * 100, 2),
-                citywide_perc = round( (sum(PWGTP*NYCgov_Pov_Stat) / mean(population)) * 100, 2),
-                n_pov_weighted = sum((PWGTP*NYCgov_Pov_Stat)),
+      summarise(cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat_num)) / sum(PWGTP) * 100, 2),
+                citywide_perc = round( (sum(PWGTP*NYCgov_Pov_Stat_num) / mean(population)) * 100, 2),
+                n_pov_weighted = sum((PWGTP*NYCgov_Pov_Stat_num)),
                 # n_sample = length(PWGTP),
                 # n_weighted = sum(PWGTP),
                 # se calc. based on binomial property for variance (p * 1-p)
                 ## https://www.sapling.com/6183888/calculate-sampling-error-percentages
                 # se = round((sqrt((sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)))) / (n()-1)))*100, 2),
                 ## coefficient of variation (https://influentialpoints.com/Training/coefficient_of_variation_of_a_mean.htm)
-                cv = round((100*sd(NYCgov_Pov_Stat)) / (mean(NYCgov_Pov_Stat) * sqrt(n())), 2),
-                ci90 = round(qnorm(0.95) * (sqrt((sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)))) / (n()-1)))*100, 2)
+                CV = round((100*sd(NYCgov_Pov_Stat_num)) / (mean(NYCgov_Pov_Stat_num) * sqrt(n())), 2),
+                ci90 = round(qnorm(0.95) * (sqrt((sum((PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)))) / (n()-1)))*100, 2)
       ) %>%
+      # replace CV values of 0 with 100 as they are artefacts of super small samples
+      mutate(CV = ifelse(CV==0, 100, CV)) %>%
+      # remove unreliable rows if CV > 15 and option is selected
+      {if(input$data_comp_filter_checkbox) filter(., CV<15) else .} %>%
       drop_na()
   })
-    
+  
+  x2 = dataset %>%
+    filter(year >= 2016) %>%
+    group_by(year, Boro) %>%
+    summarise(
+      cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat_num)) / sum(PWGTP) * 100, 2),
+      citywide_perc = round( (sum(PWGTP*NYCgov_Pov_Stat_num) / mean(population)) * 100, 2),
+      n_pov_weighted = sum((PWGTP*NYCgov_Pov_Stat_num))
+    )
+      
   comparison_dt = reactive({
     validate(
       need(input$checkbox_data_comparison_year, 'Select at least one year'),
       need(input$selectize_data_comparison_pop_characteristics != '', 'Choose comparison dimensions')
     )
 
-    dt = filter(df, year == input$checkbox_data_comparison_year) %>%
+    dt = filter(df, year %in% input$checkbox_data_comparison_year) %>%
       # this is making it take the list as var names (below)
       group_by(!!!syms(append('year', input$selectize_data_comparison_pop_characteristics))) %>%
-      summarise(cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat)) / sum(PWGTP) * 100, 2),
-                citywide_perc = round( (sum(PWGTP*NYCgov_Pov_Stat) / mean(population)) * 100, 2),
-                n_pov_weighted = sum((PWGTP*NYCgov_Pov_Stat)),
+      summarise(cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat_num)) / sum(PWGTP) * 100, 2),
+                citywide_perc = round( (sum(PWGTP*NYCgov_Pov_Stat_num) / mean(population)) * 100, 2),
+                n_pov_weighted = sum((PWGTP*NYCgov_Pov_Stat_num)),
                 # n_sample = length(PWGTP),
                 # n_weighted = sum(PWGTP),
                 # se calc. based on binomial property for variance (p * 1-p)
                 ## https://www.sapling.com/6183888/calculate-sampling-error-percentages
                 # se = round((sqrt((sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)))) / (n()-1)))*100, 2),
                 ## coefficient of variation (https://influentialpoints.com/Training/coefficient_of_variation_of_a_mean.htm)
-                cv = round((100*sd(NYCgov_Pov_Stat)) / (mean(NYCgov_Pov_Stat) * sqrt(n())), 2),
-                ci90 = round(qnorm(0.95) * (sqrt((sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat)/sum(PWGTP)))) / (n()-1)))*100, 2)
+                CV = round((100*sd(NYCgov_Pov_Stat_num)) / (mean(NYCgov_Pov_Stat_num) * sqrt(n())), 2),
+                ci90 = round(qnorm(0.95) * (sqrt((sum((PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)) * (1-sum((PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)))) / (n()-1)))*100, 2)
       ) %>%
+      # replace CV values of 0 with 100 as they are artefacts of super small samples
+      mutate(CV = ifelse(CV==0, 100, CV)) %>%
+      # remove unreliable rows if CV > 15 and option is selected
+      {if(input$data_comp_filter_checkbox) filter(., CV<15) else .} %>%
       drop_na() %>%
       datatable(extensions = list('Buttons'),
                 options = list(
-                  dom = 'Bfrtip',
                   scrollX = TRUE,
                   scrollY = "400px",
-                  paging = FALSE,
-                  buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
+                  paging = FALSE
                 ),
                 colnames = c('Year' = 'year', 'Cat. %' = 'cat_perc',
-                             '95% CI' = 'ci95', 'Count' = 'n_pov_weighted',
-                             'Pop. %' = 'citywide_perc', 'CV' = 'cv'
+                             '90% CI' = 'ci90', 'Count' = 'n_pov_weighted',
+                             'Pop. %' = 'citywide_perc'
                              )
                 ) 
     dt = dt %>%
@@ -1249,41 +1362,42 @@ server <- function(input, output) {
                   backgroundSize = '98% 88%',
                   backgroundRepeat = 'no-repeat',
                   backgroundPosition = 'center') %>%
-      formatStyle('CV',
-                  target = 'row',
-                  backgroundColor = styleInterval(15, c('', 'gray'))) %>%
       formatStyle('Year',
-                  backgroundColor = styleEqual(unique(na.omit(df$year)), brewer.pal(n = length(unique(na.omit(df$year))), name = 'Blues')))
+                  backgroundColor = styleEqual(unique(na.omit(df$year)), viridis(length(unique(na.omit(df$year))), alpha = 0.4)))
     
     # color columns super hack style
     if ('Boro' %in% input$selectize_data_comparison_pop_characteristics){
-      dt = dt %>% formatStyle('boro',
-                              backgroundColor = styleEqual(sort(unique(na.omit(df$boro))), color_palette[1:length(unique(na.omit(df$boro)))]))}
+      dt = dt %>% formatStyle('Boro',
+                              backgroundColor = styleEqual(sort(unique(na.omit(df$Boro))), color_palette[1:length(unique(na.omit(df$Boro)))]))}
     if ('AgeCateg' %in% input$selectize_data_comparison_pop_characteristics){
       dt = dt %>% formatStyle('AgeCateg',
-                              backgroundColor = styleEqual(sort(unique(na.omit(df$age_categ))), color_palette[1:length(unique(na.omit(df$age_categ)))]))}
+                              backgroundColor = styleEqual(sort(unique(na.omit(df$AgeCateg))), color_palette[1:length(unique(na.omit(df$AgeCateg)))]))}
     if ('EducAttain' %in% input$selectize_data_comparison_pop_characteristics){
       dt = dt %>% formatStyle('EducAttain',
                               backgroundColor = styleEqual(sort(unique(na.omit(df$EducAttain))), color_palette[1:length(unique(na.omit(df$EducAttain)))]))}
     if ('SEX' %in% input$selectize_data_comparison_pop_characteristics){
       dt = dt %>% formatStyle('SEX',
-                              backgroundColor = styleEqual(sort(unique(na.omit(df$sex))), color_palette[1:length(unique(na.omit(df$sex)))]))}
+                              backgroundColor = styleEqual(sort(unique(na.omit(df$SEX))), color_palette[1:length(unique(na.omit(df$SEX)))]))}
     if ('Ethnicity' %in% input$selectize_data_comparison_pop_characteristics){
       dt = dt %>% formatStyle('Ethnicity',
-                              backgroundColor = styleEqual(sort(unique(na.omit(df$ethnicity))), color_palette[1:length(unique(na.omit(df$ethnicity)))]))}
+                              backgroundColor = styleEqual(sort(unique(na.omit(df$Ethnicity))), color_palette[1:length(unique(na.omit(df$Ethnicity)))]))}
     if ('DIS' %in% input$selectize_data_comparison_pop_characteristics){
       dt = dt %>% formatStyle('DIS',
-                              backgroundColor = styleEqual(sort(unique(na.omit(df$dis))), color_palette[1:length(unique(na.omit(df$dis)))]))}
+                              backgroundColor = styleEqual(sort(unique(na.omit(df$DIS))), color_palette[1:length(unique(na.omit(df$DIS)))]))}
     if ('TEN' %in% input$selectize_data_comparison_pop_characteristics){
       dt = dt %>% formatStyle('TEN',
-                              backgroundColor = styleEqual(sort(unique(na.omit(df$ten))), color_palette[1:length(unique(na.omit(df$ten)))]))}
+                              backgroundColor = styleEqual(sort(unique(na.omit(df$TEN))), color_palette[1:length(unique(na.omit(df$TEN)))]))}
+    # indicate unreliable data based on coefficient of variation > 15
+    dt = dt %>% formatStyle('CV',
+                            target = 'row',
+                            backgroundColor = styleInterval(15, c('', '#E4413880')))
     dt
   })
   
   output$table_data_comparison_1 <- renderDataTable(
     comparison_dt(),
     )
-  
+
   # Downloadable files of selected dataset ----
   myModal <- function() {
     div(id = "test",
@@ -1327,15 +1441,92 @@ server <- function(input, output) {
     }
   )
   
-    # output$downloadData <- downloadHandler(
-  #   filename = function() {
-  #     paste('NYCgov_', str_c(input$selectize_data_comparison_pop_characteristics, collapse = '-'), '_', Sys.Date(), '.csv', sep = '') 
-  #   },
-  #   content = function(file) {
-  #     print(head(as.data.frame(comparison_df())))
-  #     write.csv(as.data.frame(comparison_df()), file, row.names = FALSE)
-  #   }
-  # )
+  ## Data Map ----
+  
+  output$data_map = renderLeaflet({
+    ### NYC POVERTY DATA
+    label_info = 'Ethnicity'
+    years = c(2018)
+    
+    pov_data1 = dataset %>%
+      filter(year>=years & year<=years) %>%
+      group_by(PUMA) %>%
+      summarise(pov_rate = round(sum(PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)*100, 1),
+                pop = sum(PWGTP)) 
+    
+    pov_data2 = dataset %>%
+      filter(year>=years & year<=years) %>%
+      group_by(PUMA, !!sym(label_info)) %>%
+      summarise(pov_rate = round(sum(PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)*100, 1),
+                pop = sum(PWGTP)) %>%
+      pivot_wider(names_from = Ethnicity, values_from = c('pov_rate', 'pop'))
+    #join dfs
+    pov_data = inner_join(pov_data1, pov_data2, by = 'PUMA')
+    
+    pov_data %>%
+      select(starts_with('pop_'))/pov_data$pop * 100
+    ### PUMA GEOMETRY DATA
+    #downloaded from https://maps.princeton.edu/catalog/nyu-2451-34512
+    json_nyc = geojson_sf('/Users/djw/Downloads/Public Use Microdata Areas (PUMA).geojson')
+    
+    ### NEIGHBORHOOD INFO
+    #downloaded from  https://data.cityofnewyork.us/Housing-Development/Public-Use-Microdata-Areas-PUMA-/cwiz-gcty
+    neighborhoods = st_read('/Users/djw/Downloads/nyu-2451-34512-shapefile/nyu_2451_34512.shp') %>%
+      mutate(boro = str_match(namelsad10, "-\\s*(.*?)\\s* ")[,2], #pull out names from column
+             com_dist = str_extract(namelsad10, "[[:digit:]]+"),
+             neighborhood = str_match(namelsad10, "--\\s*(.*?)\\s* PUMA")[,2],
+             puma = as.character(as.numeric(pumace10)) #remove leading 0
+      ) %>%
+      data.table::setDT() #convert to datatable
+    
+    #remove column
+    neighborhoods = neighborhoods[, !'geometry']
+    
+    #join dfs
+    map_data = inner_join(json_nyc, pov_data, by = c("puma" = "PUMA"))
+    map_data = inner_join(map_data, neighborhoods, by = 'puma')
+    
+    ### MAKE INTERACTIVE MAP OF POVERTY RATE BY PUMA
+    labels = sprintf(
+      "<h4>%s<br/><strong>%s in Poverty</strong></h4><strong>Population by Ethnicity</strong><br/>White: %s<br/>Black: %s<br/>Asian: %s<br/>Hispanic: %s",
+      map_data$neighborhood,
+      paste0(as.character(map_data$pov_rate), '%'),
+      paste0(round(map_data$`pop_White (non-hispanic)`/map_data$pop*100, 1), '%'),
+      paste0(round(map_data$`pop_Black (non-hispanic)`/map_data$pop*100, 1), '%'),
+      paste0(round(map_data$`pop_Asian (non-hispanic)`/map_data$pop*100, 1), '%'),
+      paste0(round(map_data$`pop_Hispanic (any race)`/map_data$pop*100, 1), '%')
+    ) %>%
+      lapply(htmltools::HTML)
+    
+    # SET COLORS
+    bins <- c(0, 10, 15, 20, 25, 30, 100)
+    pal <- colorBin("Blues", domain = map_data$pov_rate, bins = bins)
+    
+    ### INTERACTIVE MAP
+    leaflet(map_data) %>%
+      addProviderTiles("CartoDB.PositronNoLabels") %>%
+      addPolygons(label = labels,
+                  stroke = TRUE,
+                  weight = .4,
+                  color = "white",
+                  smoothFactor = 0.5,
+                  opacity = .5,
+                  fillOpacity = 0.7,
+                  fillColor = ~pal(pov_rate),
+                  highlightOptions = highlightOptions(weight = .8,
+                                                      fillOpacity = 1,
+                                                      color = 'white',
+                                                      opacity = 1,
+                                                      bringToFront = TRUE)
+      ) %>%
+      addLegend(position = "bottomright",
+                pal = pal,
+                values = ~ pov_rate,
+                title = "Below NYCgov</br>Poverty Threshold",
+                labFormat = labelFormat(suffix = "%"),
+                opacity = 0.7)
+    
+  })
 }
 
 shinyApp(ui, server)
