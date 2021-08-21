@@ -30,8 +30,8 @@ In this case we are specifying the directory where the files are located and the
 
 ```{r file-list, echo=FALSE}
 # set the path from which the files will be read from
-path_open_data = '/Users/djw/Documents/pCloud_synced/Academics/Projects/2021_NYC_PRU/Data/open_data/'
-path_full = '../../../Data/full_data/'
+path_open_data = 'data/open_data/'
+path_full = 'data/full_data/'
 
 # create a list of the files from your target directory
 open_file_list <- list.files(path = path_open_data, pattern = '\\.csv', ignore.case = TRUE)
