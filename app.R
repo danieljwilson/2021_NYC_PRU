@@ -45,7 +45,9 @@ ui <- dashboardPage(
   
   # BODY ----
   dashboardBody(
-    tags$head(tags$style("#test .modal-body {width: auto; height: auto;}")),
+    tags$head(tags$style("#test .modal-body {width: auto; height: auto;}"),
+              #css file is saved in the `www` folder
+              tags$link(rel = 'stylesheet', type = 'text/css', href = 'custom_styling.css')),
     tabItems(
       # Poverty ----
       ## Poverty About -----
@@ -191,50 +193,6 @@ ui <- dashboardPage(
               ),
       ),
       
-      ## Poverty Profiles -----
-
-      # tabItem(tabName = "poverty_profiles_jane_doe",
-      #         h1("Profiles"),
-      #         h3('Note that these to be replaced by \"Archetypes\" if the section is to be kept...'),
-      #         p("In a city where almost 1 in 5 people are living below the poverty threshold it is inevitable that you cross paths with people living in poverty on a daily basis. But do you know how these pepole are? Or what that experience is like?"),
-      #         p("Five New Yorkers living under the city's poverty threshold, one from each borough, have generously allowed us to share their stories with you."),
-      #         hr(style = "border-top: '1px solid black'"),
-      #         h2("Jane Doe"),
-      #         h4("34, Park Slope"),
-      #         img(src = "jane.jpg", width="65%"),
-      #         hr(),
-      #         fluidRow(
-      #           box(width = 5,
-      #               h3('The Numbers'),
-      #               dataTableOutput('table_jane_doe')
-      #               ),
-      #           box(width = 7,
-      #               p('Description of life for Jane Doe...Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse dapibus varius pellentesque. Sed gravida tortor et augue tincidunt pellentesque. Aliquam commodo dignissim purus, at scelerisque diam convallis a. Ut mi ipsum, sollicitudin et feugiat a, suscipit nec nulla. Suspendisse gravida laoreet libero pharetra maximus. Aenean facilisis, diam ut convallis ornare, sapien metus ornare lectus, et malesuada elit metus a nibh. Vivamus cursus elit sed velit aliquam porttitor et quis magna. Quisque pellentesque lorem a augue commodo gravida. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Phasellus sapien sapien, semper sit amet ex a, congue tristique nulla. Vestibulum imperdiet metus ut odio eleifend eleifend. Nullam vel pharetra mauris, non malesuada ex. Vivamus orci nisl, hendrerit vitae velit nec, feugiat finibus neque. Phasellus condimentum, ipsum a malesuada pellentesque, urna ante porttitor nunc, sed rutrum nulla nisi sed nulla. Suspendisse potenti. Vivamus eget metus sollicitudin, pharetra nulla eget, lobortis nulla.'),
-      #               p('Cras maximus dolor vitae lacus commodo mattis. Praesent ac augue at diam sollicitudin pharetra vitae et dolor. Praesent blandit eros gravida ante commodo, quis pharetra lacus tempus. Nulla euismod viverra justo vitae ultrices. Donec vitae lorem at nisi sollicitudin congue. Nullam enim neque, efficitur mattis venenatis eu, efficitur ut nulla. In eleifend justo ut sem sagittis egestas. Donec malesuada, ante at pretium aliquam, quam mi pretium neque, sed fringilla dui sapien pulvinar diam. Praesent sapien urna, auctor nec enim a, viverra scelerisque leo. Sed nulla erat, sagittis sit amet mi non, faucibus imperdiet orci. Phasellus id mauris tellus. Praesent a odio augue. Donec ornare sem nulla, vel mattis risus venenatis at. Ut eleifend dictum augue eget malesuada.'),
-      #               p('Sed a lacinia lorem. Aenean luctus dui ante, vel molestie nunc bibendum non. Aenean eros quam, consequat gravida condimentum non, blandit nec leo. Donec massa ex, pellentesque sit amet suscipit vel, aliquam non nibh. Phasellus ut orci vestibulum, elementum tortor et, congue lorem. Nam convallis nisi a nisi finibus aliquam. Nullam faucibus massa a est porta, quis mattis erat posuere. Nulla urna lectus, vestibulum id posuere eget, faucibus vel orci. Etiam id molestie lorem, ac imperdiet dolor. Vestibulum sit amet diam vehicula, tincidunt orci a, bibendum ex. Pellentesque fermentum sit amet orci at blandit. Integer facilisis erat eu turpis mattis consectetur. Integer non imperdiet neque, sit amet scelerisque risus. Curabitur et nibh efficitur, fermentum arcu ut, lacinia augue. Proin felis arcu, vestibulum a turpis non, ornare mattis odio. Maecenas nibh velit, commodo eu quam eget, condimentum imperdiet nulla.'),
-      #               p('Morbi et libero rutrum, tincidunt elit quis, tempus odio. In maximus ultricies mi, eu elementum augue ornare nec. Integer congue placerat sapien, a efficitur risus rutrum sit amet. In venenatis porttitor urna, sed malesuada purus interdum id. In lacinia venenatis est. Maecenas vulputate malesuada urna sit amet euismod. Mauris a porttitor ipsum, ornare mattis orci. In egestas magna a justo commodo, id auctor odio rutrum. Nullam ultricies odio ac mauris aliquet, quis viverra mi ultrices. Nam eget mollis urna, non ullamcorper nisl. Quisque hendrerit, tellus id scelerisque rutrum, lectus quam viverra tortor, vitae maximus augue augue non ante. Aenean sed pharetra magna. Morbi rhoncus, felis a auctor consectetur, turpis risus ornare mi, vel congue ligula massa et risus. Aliquam euismod massa malesuada nunc interdum, sed tempus enim tincidunt. Sed laoreet sem augue, vitae dignissim sapien malesuada blandit. Aenean sed arcu nec neque pharetra pulvinar.'))
-      #         )),
-      # tabItem(tabName = "poverty_profiles_john_doe",
-      #         h1("Profiles"),
-      #         h3('Note that these to be replaced by \"Archetypes\" if the section is to be kept...'),
-      #         p("In a city where almost 1 in 5 people are living below the poverty threshold it is inevitable that you cross paths with people living in poverty on a daily basis. But do you know how these pepole are? Or what that experience is like?"),
-      #         p("Five New Yorkers living under the city's poverty threshold, one from each borough, have generously allowed us to share their stories with you."),
-      #         hr(),
-      #         h2("John Doe"),
-      #         h4("48, Sunset Park"),
-      #         img(src = "john.jpg", width="65%"),
-      #         hr(),
-      #         fluidRow(
-      #           box(width = 5,
-      #               h3('The Numbers'),
-      #               dataTableOutput('table_john_doe')
-      #           ),
-      #           box(width = 7,
-      #               p('Description of life for John Doe...Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse dapibus varius pellentesque. Sed gravida tortor et augue tincidunt pellentesque. Aliquam commodo dignissim purus, at scelerisque diam convallis a. Ut mi ipsum, sollicitudin et feugiat a, suscipit nec nulla. Suspendisse gravida laoreet libero pharetra maximus. Aenean facilisis, diam ut convallis ornare, sapien metus ornare lectus, et malesuada elit metus a nibh. Vivamus cursus elit sed velit aliquam porttitor et quis magna. Quisque pellentesque lorem a augue commodo gravida. Orci varius natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Phasellus sapien sapien, semper sit amet ex a, congue tristique nulla. Vestibulum imperdiet metus ut odio eleifend eleifend. Nullam vel pharetra mauris, non malesuada ex. Vivamus orci nisl, hendrerit vitae velit nec, feugiat finibus neque. Phasellus condimentum, ipsum a malesuada pellentesque, urna ante porttitor nunc, sed rutrum nulla nisi sed nulla. Suspendisse potenti. Vivamus eget metus sollicitudin, pharetra nulla eget, lobortis nulla.'),
-      #               p('Cras maximus dolor vitae lacus commodo mattis. Praesent ac augue at diam sollicitudin pharetra vitae et dolor. Praesent blandit eros gravida ante commodo, quis pharetra lacus tempus. Nulla euismod viverra justo vitae ultrices. Donec vitae lorem at nisi sollicitudin congue. Nullam enim neque, efficitur mattis venenatis eu, efficitur ut nulla. In eleifend justo ut sem sagittis egestas. Donec malesuada, ante at pretium aliquam, quam mi pretium neque, sed fringilla dui sapien pulvinar diam. Praesent sapien urna, auctor nec enim a, viverra scelerisque leo. Sed nulla erat, sagittis sit amet mi non, faucibus imperdiet orci. Phasellus id mauris tellus. Praesent a odio augue. Donec ornare sem nulla, vel mattis risus venenatis at. Ut eleifend dictum augue eget malesuada.'),
-      #               p('Sed a lacinia lorem. Aenean luctus dui ante, vel molestie nunc bibendum non. Aenean eros quam, consequat gravida condimentum non, blandit nec leo. Donec massa ex, pellentesque sit amet suscipit vel, aliquam non nibh. Phasellus ut orci vestibulum, elementum tortor et, congue lorem. Nam convallis nisi a nisi finibus aliquam. Nullam faucibus massa a est porta, quis mattis erat posuere. Nulla urna lectus, vestibulum id posuere eget, faucibus vel orci. Etiam id molestie lorem, ac imperdiet dolor. Vestibulum sit amet diam vehicula, tincidunt orci a, bibendum ex. Pellentesque fermentum sit amet orci at blandit. Integer facilisis erat eu turpis mattis consectetur. Integer non imperdiet neque, sit amet scelerisque risus. Curabitur et nibh efficitur, fermentum arcu ut, lacinia augue. Proin felis arcu, vestibulum a turpis non, ornare mattis odio. Maecenas nibh velit, commodo eu quam eget, condimentum imperdiet nulla.'),
-      #               p('Morbi et libero rutrum, tincidunt elit quis, tempus odio. In maximus ultricies mi, eu elementum augue ornare nec. Integer congue placerat sapien, a efficitur risus rutrum sit amet. In venenatis porttitor urna, sed malesuada purus interdum id. In lacinia venenatis est. Maecenas vulputate malesuada urna sit amet euismod. Mauris a porttitor ipsum, ornare mattis orci. In egestas magna a justo commodo, id auctor odio rutrum. Nullam ultricies odio ac mauris aliquet, quis viverra mi ultrices. Nam eget mollis urna, non ullamcorper nisl. Quisque hendrerit, tellus id scelerisque rutrum, lectus quam viverra tortor, vitae maximus augue augue non ante. Aenean sed pharetra magna. Morbi rhoncus, felis a auctor consectetur, turpis risus ornare mi, vel congue ligula massa et risus. Aliquam euismod massa malesuada nunc interdum, sed tempus enim tincidunt. Sed laoreet sem augue, vitae dignissim sapien malesuada blandit. Aenean sed arcu nec neque pharetra pulvinar.'))
-      #         )),
       # Report ----
       ## Report - About -----
       tabItem("report_about",
@@ -947,21 +905,19 @@ ui <- dashboardPage(
       ## Data Map ----
       tabItem(tabName = "data_map",
               fluidPage(
-                h3('Neighborhood Info'),
-                box(label = NULL,
+                box(title = 'Neighborhood Info',
                     status = 'primary',
                     width = 12,
                     column(
-                      width = 3,
+                      width = 12,
+                      leafletOutput('data_map', height="70vh")
+                    ),
+                    column(
+                      width = 4,
                       sliderInput("data_map_year_slider", label = "Select Year(s)",
                                   min = 2005, max = 2018,
                                   value = c(2015, 2018), sep='', ticks = FALSE)
-                    ),
-                    column(
-                      width = 9,
-                      leafletOutput('data_map', height="70vh")
                     )
-                    
                 )
               )
       )
@@ -978,8 +934,6 @@ server <- function(input, output) {
   
   ## Load Data ----
   df = readRDS("data/dataset.RDS")
-
-  profile_finances = read_csv('temp_data/monthly_spend.csv')
 
   output$table_jane_doe <- renderDataTable(profile_finances,
                                             options = list(
@@ -1446,10 +1400,9 @@ server <- function(input, output) {
   output$data_map = renderLeaflet({
     ### NYC POVERTY DATA
     label_info = 'Ethnicity'
-    years = c(2018)
     
     pov_data1 = dataset %>%
-      filter(year>=years & year<=years) %>%
+      filter(year>=input$data_map_year_slider[1] & year<=input$data_map_year_slider[2]) %>%
       group_by(PUMA) %>%
       summarise(pov_rate = round(sum(PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)*100, 1),
                 pop = sum(PWGTP)) 
@@ -1504,7 +1457,7 @@ server <- function(input, output) {
     
     ### INTERACTIVE MAP
     leaflet(map_data) %>%
-      addProviderTiles("CartoDB.PositronNoLabels") %>%
+      #addProviderTiles("CartoDB.PositronNoLabels") %>%
       addPolygons(label = labels,
                   stroke = TRUE,
                   weight = .4,
