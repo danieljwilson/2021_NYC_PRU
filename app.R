@@ -215,13 +215,13 @@ ui <- dashboardPage(
       ## Report - Key Findings ----
       tabItem("report_key_findings",
               fluidPage(
-                h1("1 | Key Findings"),
+                h1("Key Findings"),
                 p('The New York City Government (NYCgov) poverty measure is a measure of poverty adapted to the realities of the city’s economy. The poverty threshold accounts for housing costs that are higher than the national average. The measure of family resources includes public benefits and tax credits, but also acknowledges spending on medical costs and work-related expenses such as childcare and commuting.'),
                 p('The NYCgov poverty rate, threshold, and income measure are higher than those same figures in the U.S. official measure.'),
                 hr(),
                 fluidRow(
                   box(
-                    title = '1.1 Poverty in New York City, 2019',
+                    title = '1 | Poverty in New York City, 2019',
                     collapsible = TRUE,
                     collapsed = FALSE,
                     width = 12,
@@ -292,7 +292,7 @@ ui <- dashboardPage(
                 ),
                 fluidRow(
                   box(
-                    title = '1.2 Differences in New York City Rates by Demographics and Geography',
+                    title = '2 | Differences in New York City Rates by Demographics and Geography',
                     collapsible = TRUE,
                     collapsed = TRUE,
                     width = 12,
@@ -363,7 +363,7 @@ ui <- dashboardPage(
                 ),
                 fluidRow(
                   box(
-                    title = '1.3 What Drives the Poverty Rate: The New York City Labor Market, Wages, and Income Supports',
+                    title = '3 | What Drives the Poverty Rate: The New York City Labor Market, Wages, and Income Supports',
                     collapsible = TRUE,
                     collapsed = TRUE,
                     width = 12,
@@ -394,7 +394,7 @@ ui <- dashboardPage(
                 ),
                 fluidRow(
                   box(
-                    title = '1.4 The Distribution of Poverty and the Safety Net',
+                    title = '4 | The Distribution of Poverty and the Safety Net',
                     collapsible = TRUE,
                     collapsed = TRUE,
                     width = 12,
@@ -414,7 +414,7 @@ ui <- dashboardPage(
                 ),
                 fluidRow(
                   box(
-                    title = '1.5 | The NYCgov Poverty Measure',
+                    title = '5 | The NYCgov Poverty Measure',
                     collapsible = TRUE,
                     collapsed = TRUE,
                     width = 12,
@@ -606,10 +606,10 @@ ui <- dashboardPage(
       ## Report: Measuring Poverty ----
       tabItem("report_measuring",
               fluidPage(
-                h1("3 | Measuring Poverty"),
+                h1("Measuring Poverty"),
                 h3('The NYCgov Poverty Measure Compared to U.S. Official and U.S. Supplemental Poverty Measures'),
                 box(
-                  title = '3.1 | The Need for an Alternative to the U.S. Official Poverty Measure',
+                  title = '1 | The Need for an Alternative to the U.S. Official Poverty Measure',
                   collapsible = TRUE,
                   collapsed = FALSE,
                   width = 12,
@@ -625,7 +625,7 @@ ui <- dashboardPage(
                   h6('[2] In 2019 the American budget share for food fell to an historical low of 9.5 percent. See: ', a('link', href = 'https://www.ers.usda.gov/data-products/chart-gallery/gallery/chart-detail/?chartId=76967', target = '_blank'))
                 ),
                 box(
-                  title = '3.2 | Alternative Measures: The National Academy of Sciences’ Recommendations and the Supplemental Poverty Measure',
+                  title = '2 | Alternative Measures: The National Academy of Sciences’ Recommendations and the Supplemental Poverty Measure',
                   collapsible = TRUE,
                   collapsed = TRUE,
                   width = 12,
@@ -663,7 +663,7 @@ ui <- dashboardPage(
                   h6('[6] “Observations from the Interagency Technical Working Group on Developing a Supplemental Poverty Measure.” March 2010. Available at: ', a('link', href = 'https://www.census.gov/content/dam/Census/topics/income/supplemental-poverty-measure/spm-twgobservations.pdf', target = '_blank'))
                 ),
                 box(
-                  title = '3.3 | NYC Opportunity’s Adoption of the NAS/SPM Method',
+                  title = '3 | NYC Opportunity’s Adoption of the NAS/SPM Method',
                   collapsible = TRUE,
                   collapsed = TRUE,
                   width = 12,
@@ -703,7 +703,7 @@ ui <- dashboardPage(
                   h6('[10] See: ', a('link', href = 'https://www1.nyc.gov/site/opportunity/poverty-in-nyc/poverty-measure.page', target = '_blank'))
                 ),
                 box(
-                  title = '3.4 | Comparing Poverty Rates',
+                  title = '4 | Comparing Poverty Rates',
                   collapsible = TRUE,
                   collapsed = TRUE,
                   width = 12,
@@ -1257,15 +1257,6 @@ server <- function(input, output) {
       {if(input$data_comp_filter_checkbox) filter(., CV<15) else .} %>%
       drop_na()
   })
-  
-  x2 = dataset %>%
-    filter(year >= 2016) %>%
-    group_by(year, Boro) %>%
-    summarise(
-      cat_perc = round(sum((PWGTP*NYCgov_Pov_Stat_num)) / sum(PWGTP) * 100, 2),
-      citywide_perc = round( (sum(PWGTP*NYCgov_Pov_Stat_num) / mean(population)) * 100, 2),
-      n_pov_weighted = sum((PWGTP*NYCgov_Pov_Stat_num))
-    )
       
   comparison_dt = reactive({
     validate(
@@ -1401,14 +1392,14 @@ server <- function(input, output) {
     ### NYC POVERTY DATA
     label_info = 'Ethnicity'
     
-    pov_data1 = dataset %>%
+    pov_data1 = df %>%
       filter(year>=input$data_map_year_slider[1] & year<=input$data_map_year_slider[2]) %>%
       group_by(PUMA) %>%
       summarise(pov_rate = round(sum(PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)*100, 1),
                 pop = sum(PWGTP)) 
     
-    pov_data2 = dataset %>%
-      filter(year>=years & year<=years) %>%
+    pov_data2 = df %>%
+      filter(year>=input$data_map_year_slider[1] & year<=input$data_map_year_slider[2]) %>%
       group_by(PUMA, !!sym(label_info)) %>%
       summarise(pov_rate = round(sum(PWGTP*NYCgov_Pov_Stat_num)/sum(PWGTP)*100, 1),
                 pop = sum(PWGTP)) %>%

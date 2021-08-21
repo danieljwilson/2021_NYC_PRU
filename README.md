@@ -40,6 +40,20 @@ The data munging process consists of the following steps (the numbers below matc
 ### 3. `R Shiny` Web App
 The `R Shiny` web app consists of two main elements, the `ui` and the `server`.
 
+#### UI
+The `ui` ...
+
+Description of general function
+
+Description of project specifics
+
+#### SERVER
+The `server` ...
+
+Description of general function
+
+Description of project specifics
+
 ---
 
 ## About the NYC Poverty Research Unit
