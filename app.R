@@ -1450,6 +1450,10 @@ server <- function(input, output) {
     leaflet(map_data) %>%
       #addProviderTiles("CartoDB.PositronNoLabels") %>%
       addPolygons(label = labels,
+                  labelOptions = labelOptions(style = list(
+                                                "border-color" = "rgba(0,0,0,0.5)",
+                                                "background-color" = "rgba(255,255,255,0.65)"
+                                              )),
                   stroke = TRUE,
                   weight = .4,
                   color = "white",
