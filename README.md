@@ -1,14 +1,13 @@
 # PRU Web App
 
-<img src="https://changecapitalfund.org/wp-content/uploads/2015/09/NYCMOEO.png" width="20%" />
-<img src="https://images.squarespace-cdn.com/content/v1/59539f22e6f2e181ffc682ef/1612968994021-AO979E2LUK0F4KXBYRQ0/CIC_LogoFull_Color.png?format=1000w" width="25%" />
+<img src="https://changecapitalfund.org/wp-content/uploads/2015/09/NYCMOEO.png" width="20%" /><img src="https://images.squarespace-cdn.com/content/v1/59539f22e6f2e181ffc682ef/1612968994021-AO979E2LUK0F4KXBYRQ0/CIC_LogoFull_Color.png?format=1000w" width="25%" />
 
 ---
 The Poverty Research Unit web app is currently a beta version of an online interactive companion to the annual [Poverty Measure report](https://www1.nyc.gov/site/opportunity/poverty-in-nyc/poverty-measure.page).
 
 It was initially developed by [Civic Innovation Corps](https://www.codingitforward.com/corps) fellow [Daniel J Wilson](https://danieljwilson.com/) over the summer of 2021.
 
-The app can be viewed at [this link]().
+**The app can be viewed at [this link](https://daniel-j-wilson.shinyapps.io/2021_NYC_PRU/)**.
 
 ---
 ## Components
