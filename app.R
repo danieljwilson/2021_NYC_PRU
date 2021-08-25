@@ -1410,12 +1410,12 @@ server <- function(input, output) {
     pov_data %>%
       select(starts_with('pop_'))/pov_data$pop * 100
     ### PUMA GEOMETRY DATA
-    #downloaded from https://maps.princeton.edu/catalog/nyu-2451-34512
-    json_nyc = geojson_sf('/Users/djw/Downloads/Public Use Microdata Areas (PUMA).geojson')
+    #downloaded from https://data.cityofnewyork.us/Housing-Development/Public-Use-Microdata-Areas-PUMA-/cwiz-gcty
+    json_nyc = geojson_sf('data/Public Use Microdata Areas (PUMA).geojson')
     
     ### NEIGHBORHOOD INFO
-    #downloaded from  https://data.cityofnewyork.us/Housing-Development/Public-Use-Microdata-Areas-PUMA-/cwiz-gcty
-    neighborhoods = st_read('/Users/djw/Downloads/nyu-2451-34512-shapefile/nyu_2451_34512.shp') %>%
+    #downloaded from  https://maps.princeton.edu/catalog/nyu-2451-34512
+    neighborhoods = st_read('data/nyu-2451-34512-shapefile/nyu_2451_34512.shp') %>%
       mutate(boro = str_match(namelsad10, "-\\s*(.*?)\\s* ")[,2], #pull out names from column
              com_dist = str_extract(namelsad10, "[[:digit:]]+"),
              neighborhood = str_match(namelsad10, "--\\s*(.*?)\\s* PUMA")[,2],
