@@ -1006,26 +1006,32 @@ server <- function(input, output) {
     paste0('NYCgov and Official Poverty Thresholds | ', as.character(input$slider_1_2[1]),
            '-', as.character(input$slider_1_2[2]))
   })
-  
+ 
   # 1.2 Create Datatable
   df_1_2 <- reactive({
     if (input$radio_1_2=='family') {
       df %>%
         filter(AGEP<65) %>% # avoid fact that official measure has two different rates for above/below 65
         filter(year>=input$slider_1_2[1] & year<=input$slider_1_2[2]) %>% # year range
-        filter(NP == 4 & FamType_PU == 'Husband/Wife + child') %>%
+        filter(NP == 4) %>% #limit size of poverty unit to 4
+        #make sure there are 2 children 1 head, 1 spouse/partner and NO other in the poverty unit
+        group_by(SERIALNO) %>%
+        filter(!any(Povunit_Rel=='Other') & sum(Povunit_Rel=='Child')==2 & sum(Povunit_Rel=='Head')==1 & sum(Povunit_Rel=='Spouse/Partner')==1) %>%
+        ungroup() %>%
         select(year, Off_Threshold, NYCgov_Threshold) %>%
         distinct(year, .keep_all= TRUE) %>%
-        gather(threshold, amount, Off_Threshold:NYCgov_Threshold)
+        gather(threshold, amount, Off_Threshold:NYCgov_Threshold) %>%
+        mutate(amount = round(amount, 0))
     }
     else{
       df %>%
         filter(AGEP<65) %>% # avoid fact that official measure has two different rates for above/below 65
         filter(year>=input$slider_1_2[1] & year<=input$slider_1_2[2]) %>% # year range
-        filter(NP == 1) %>%
+        filter(PovAdults_PU == 1 & PovKids_PU == 0) %>%
         select(year, Off_Threshold, NYCgov_Threshold) %>%
         distinct(year, .keep_all= TRUE) %>%
-        gather(threshold, amount, Off_Threshold:NYCgov_Threshold)
+        gather(threshold, amount, Off_Threshold:NYCgov_Threshold) %>%
+        mutate(amount = round(amount, 0))
     }
   })
   
