@@ -10,15 +10,14 @@ It was initially developed by [Civic Innovation Corps](https://www.codingitforwa
 **The app can be viewed at [this link](https://daniel-j-wilson.shinyapps.io/2021_NYC_PRU/)**.
 
 ---
-## Components
-### 1. Data
+## 1. Data
 The data for the app comes from two sources. 
 1. A publicly available dataset from [NYC Open Data](https://opendata.cityofnewyork.us/) which contains basic demographic information and calculated indicators related to poverty developed by the Poverty Research Unit. The data is [available here from 2005](https://data.cityofnewyork.us/browse?q=nycgov+poverty+measure&sortBy=alpha&utf8=%E2%9C%93).
 2. An internal dataset which is used to augment the open data with additional information, such as respondant [Public Use Microdata Areas](https://www.census.gov/programs-surveys/geography/guidance/geo-areas/pumas.html) (kind of like neighborhoods), employement sector, etc.
 
 Most of the data used in both datasets originates from the [American Community Survey](https://www.census.gov/programs-surveys/acs).
 
-### 2. Data Munging
+## 2. Data Munging
 The `data_cleaning.Rmd` file imports, cleans, and combines the data that is used in the `R Shiny` web app.
 
 The columns that are to be used in the web app are initially declared in an [external Google Sheet](https://docs.google.com/spreadsheets/d/1ndZtYpCjD4CCIyGU2chJjw6yMPr4PDQY6q8OJeoYpso/edit?usp=sharing) - you can duplicate and edit this file if you wish to change the data available to the app.
@@ -43,22 +42,71 @@ The data munging process consists of the following steps (the numbers below matc
 4. Save Data
     - We're done! Save the full dataframe to an `.RDS` file (much smaller than `.csv`)
 
-### 3. `R Shiny` Web App
-The `R Shiny` web app consists of two main elements, the `ui` and the `server`.
+## 3. `R Shiny` Web App
+The `R Shiny` web app consists of two main elements, the `ui` and the `server`. In fact every `Shiny` app has the same structure: an `app.R` file that contains `ui` and `server`.
 
-#### UI
-The `ui` ...
+### UI
+The `ui` or User Interface, is what the user sees when using/interaction with the web app. 
 
-Description of general function
+More info about how this functions in R can be found [here](https://shiny.rstudio.com/tutorial/written-tutorial/lesson2/).
 
-Description of project specifics
+For the PRU Web App, the basic interface when you arrive on the page looks like this:
 
-#### SERVER
-The `server` ...
+![PRU web app user interface](images/PovResearchUnit_web_app_ui.png)
 
-Description of general function
+The `ui` is built using [shinydashboard](http://rstudio.github.io/shinydashboard/), whose basic structure follows this pattern:
 
-Description of project specifics
+```R
+dashboardPage(
+  dashboardHeader(),
+  dashboardSidebar(),
+  dashboardBody()
+)
+```
+
+The basic layout of the `ui` for the PRU App is:
+
+```
+dashboardPage()   
+    dashboardHeader()
+        app title
+    dashboardSidebar()
+        Poverty
+        Report
+        Data
+    dashboardBody()
+        Poverty
+            Poverty About
+        Report
+            Poverty About
+            Key Findings
+            Measuring Poverty
+            Appendices
+        Data
+            Spotlight
+            Detail
+            Comparison
+            Map
+```
+
+The `dashboardBody()` is where all of the visual content and text is specified, with the key elements being `fluidRow()` and `box()`. More info on how to use these elements can be found [here](https://rstudio.github.io/shinydashboard/structure.html#body).
+
+---
+**Note on Text**
+
+One thing to note is that all of the text from the [PRU report](https://www1.nyc.gov/site/opportunity/poverty-in-nyc/poverty-measure.page) is included directly in `box()` elements using the `p()` tag. This makes it easy to see where things are but creates very long lines that are not terribnly legible. A better method could be to convert the report to [`Markdown`](https://www.markdownguide.org/) which can then be saved as individual files and accessed using the `includeMarkdown` functionality of the `markdown` library. Examples and info [here](https://shiny.rstudio.com/gallery/including-html-text-and-markdown-files.html).
+
+Also a minimal example is included in the PRU Web App in the `Report: Appendices` section:
+```R
+includeMarkdown('markdown/appendices.md')
+```
+
+If you are new to using `Markdown` there are many tools that help you visualize the text while typing, such as [VS Code](https://code.visualstudio.com/docs/languages/markdown) and [Typora](https://typora.io/).
+
+### SERVER
+The `server` function contains the instructions that your computer needs to build your app.  This allows content to be dynamic.
+
+The PRU App 
 
 ---
 

@@ -310,22 +310,3 @@ Save full `dataset` with all years to the `data` folder in the project.
 # save as R file so can store factor structure
 saveRDS(dataset, file = 'data/dataset.RDS') 
 ```
-
-## Odd Values
-
-A few notes about weird values...
-
-### `NAICS`
-
-Missing all values for years prior to 2015.
-
-In 2015 and 2016 many rows are coded with invalid coding (e.g. lots of 1s and also 15, 16, 17, 18, 19, 20, 67, etc.)
-
-2017 and 2018 seem to be correct with either named industries or `NA`s.
-
-```{r echo=FALSE}
-print('NAICS data')
-dataset %>% group_by(year) %>%
-  summarise(job_count = length(which(!is.na(NAICSP)))) %>%
-  print()
-```

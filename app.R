@@ -1,3 +1,4 @@
+# IMPORTS ----
 library(tidyverse)
 library(shiny)
 library(shinydashboard)
@@ -16,24 +17,20 @@ library(leaflet) #interactive maps
 ui <- dashboardPage(
   dashboardHeader(title = "NYC Poverty Research Unit"),
   
-  # SIDEBAR----
+  ## SIDEBAR----
   dashboardSidebar(
     sidebarMenu(
-      # Poverty ----
+      ### Poverty ----
       menuItem("Background", tabName = "poverty_about", icon = icon("search-dollar")
-               # menuItem('Profiles', tabName = 'poverty_profiles',
-               #          menuSubItem('Jane Doe', tabName = 'poverty_profiles_jane_doe'),
-               #          menuSubItem('John Doe', tabName = 'poverty_profiles_john_doe'))
                ),
-      # Report -----
+      ### Report -----
       menuItem("Report", tabName = "report", icon = icon("file-alt"),
                menuSubItem('About', tabName = 'report_about'),
                menuSubItem('Key Findings', tabName = 'report_key_findings'),
-               #menuSubItem('2 | Policy and Path', tabName = 'report_policy_path'),
                menuSubItem('Measuring Poverty', tabName = 'report_measuring'),
                menuSubItem('Appendices', tabName = 'report_appendices')
       ),
-      # Data -----
+      ### Data -----
       menuItem("Data", tabName = "data", icon = icon("chart-bar"),
                menuSubItem('Spotlight', tabName = 'data_spotlight'),
                menuSubItem('Detail', tabName = 'data_detail'),
@@ -43,14 +40,14 @@ ui <- dashboardPage(
     )
   ),
   
-  # BODY ----
+  ## BODY ----
   dashboardBody(
     tags$head(tags$style("#test .modal-body {width: auto; height: auto;}"),
               #css file is saved in the `www` folder
               tags$link(rel = 'stylesheet', type = 'text/css', href = 'custom_styling.css')),
     tabItems(
-      # Poverty ----
-      ## Poverty About -----
+      ### Poverty ----
+      #### Poverty About -----
       tabItem(tabName = "poverty_about",
               fluidPage(
                 h3('About Us'),
@@ -193,8 +190,8 @@ ui <- dashboardPage(
               ),
       ),
       
-      # Report ----
-      ## Report - About -----
+      ### Report ----
+      #### Report - About -----
       tabItem("report_about",
               fluidPage(
                 h1('New York City Government Poverty Measure 2019'),
@@ -212,7 +209,7 @@ ui <- dashboardPage(
                 )
               )
       ),
-      ## Report - Key Findings ----
+      #### Report - Key Findings ----
       tabItem("report_key_findings",
               fluidPage(
                 h1("Key Findings"),
@@ -449,7 +446,7 @@ ui <- dashboardPage(
                 )
                 )
              ),
-      ## Report: Policy & Path ----
+      #### Report: Policy & Path ----
       # tabItem("report_policy_path",
       #         fluidPage(
       #           h1("2 | Policy & Path"),
@@ -603,7 +600,7 @@ ui <- dashboardPage(
       #           )
       # ),
       
-      ## Report: Measuring Poverty ----
+      #### Report: Measuring Poverty ----
       tabItem("report_measuring",
               fluidPage(
                 h1("Measuring Poverty"),
@@ -728,7 +725,7 @@ ui <- dashboardPage(
               )
       ),
       
-      ## Report: Appendices ----
+      #### Report: Appendices ----
       tabItem("report_appendices",
               fluidPage(
                 h1("Appendices"),
@@ -737,8 +734,8 @@ ui <- dashboardPage(
               )
       ),
       
-      # Data ----
-      ## Data Spotlight -----
+      ### Data ----
+      #### Data Spotlight -----
       tabItem(tabName = "data_spotlight",
               h1("Spotlight"),
               h3("New York City, 2019"),
@@ -770,7 +767,7 @@ ui <- dashboardPage(
                   )
                 )
               ),
-      ## Data Detail ----
+      #### Data Detail ----
       tabItem(tabName = 'data_detail',
               fluidPage(
                 h2('How do you compare?'),
@@ -829,7 +826,7 @@ ui <- dashboardPage(
                   )
                 )
               )),
-      ## Data Comparison ----
+      #### Data Comparison ----
       tabItem(tabName = "data_comparison",
               fluidPage(
                 h2('Drill down into the data...'),
@@ -902,7 +899,7 @@ ui <- dashboardPage(
                   )
                 )
             ),
-      ## Data Map ----
+      #### Data Map ----
       tabItem(tabName = "data_map",
               fluidPage(
                 box(title = 'Neighborhood Info',
@@ -929,30 +926,12 @@ ui <- dashboardPage(
 
 # SERVER ----
 server <- function(input, output) {
-  # set CI for plots
+  ## Set CI for plots ----
   plot_ci = 1.645 # 90%
   
   ## Load Data ----
   df = readRDS("data/dataset.RDS")
 
-  output$table_jane_doe <- renderDataTable(profile_finances,
-                                            options = list(
-                                              pageLength = nrow(profile_finances),
-                                              dom = 't',
-                                              initComplete = JS(
-                                                "function(settings, json) {",
-                                                "$(this.api().table().header()).css({'background-color': '#000', 'color': '#fff'});",
-                                                "}")))
-  
-  output$table_john_doe <- renderDataTable(profile_finances,
-                                           options = list(
-                                             pageLength = nrow(profile_finances),
-                                             dom = 't',
-                                             initComplete = JS(
-                                               "function(settings, json) {",
-                                               "$(this.api().table().header()).css({'background-color': '#000', 'color': '#fff'});",
-                                               "}")))
-  
   ## Report ----
   # 1.1 Title
   output$report_keyfindings_plot_1_1_title <- renderText({
@@ -1143,7 +1122,7 @@ server <- function(input, output) {
   
   ## Data ----
 
-  ## Data Spotlight ----
+  ### Data Spotlight ----
   spotlight_data = reactive({
     df %>%
       filter(year == input$data_spotlight_slider)
@@ -1164,7 +1143,7 @@ server <- function(input, output) {
     theme(axis.text.y  = element_blank())
   })
   
-  ## Data Detail ----
+  ### Data Detail ----
   # Text for age slider
   output$age_range <- renderText({
     paste0(as.character(input$data_detail_age_slider), ' - ',
@@ -1231,7 +1210,7 @@ server <- function(input, output) {
   # Alt plot
   
   
-  ## Data Comparison ----
+  ### Data Comparison ----
   # color palette: https://coolors.co/d9ed92-b5e48c-99d98c-76c893-52b69a-34a0a4-168aad-1a759f-1e6091-184e77
   color_palette = c('#d9ed9285', '#b5e48c85', '#99d98c85', '#76c89385', '#52b69a85',
                     '#34A0A485', '#168AAD85', '#1A759F85', '#1E609185', '#184E7785')
@@ -1349,7 +1328,7 @@ server <- function(input, output) {
     comparison_dt(),
     )
 
-  # Downloadable files of selected dataset ----
+  #### Downloadable files of selected dataset ----
   myModal <- function() {
     div(id = "test",
         modalDialog(downloadButton("download_comp_data_csv","CSV"),
@@ -1392,7 +1371,7 @@ server <- function(input, output) {
     }
   )
   
-  ## Data Map ----
+  ### Data Map ----
   
   output$data_map = renderLeaflet({
     ### NYC POVERTY DATA
@@ -1417,11 +1396,11 @@ server <- function(input, output) {
       select(starts_with('pop_'))/pov_data$pop * 100
     ### PUMA GEOMETRY DATA
     #downloaded from https://data.cityofnewyork.us/Housing-Development/Public-Use-Microdata-Areas-PUMA-/cwiz-gcty
-    json_nyc = geojson_sf('data/Public Use Microdata Areas (PUMA).geojson')
+    json_nyc = geojson_sf('data/maps/Public Use Microdata Areas (PUMA).geojson')
     
     ### NEIGHBORHOOD INFO
     #downloaded from  https://maps.princeton.edu/catalog/nyu-2451-34512
-    neighborhoods = st_read('data/nyu-2451-34512-shapefile/nyu_2451_34512.shp') %>%
+    neighborhoods = st_read('data/maps/nyu-2451-34512-shapefile/nyu_2451_34512.shp') %>%
       mutate(boro = str_match(namelsad10, "-\\s*(.*?)\\s* ")[,2], #pull out names from column
              com_dist = str_extract(namelsad10, "[[:digit:]]+"),
              neighborhood = str_match(namelsad10, "--\\s*(.*?)\\s* PUMA")[,2],
