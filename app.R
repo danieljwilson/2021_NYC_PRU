@@ -13,6 +13,7 @@ library(sf) #simple features access for mapping
 library(geojsonsf) #simple feature convertor
 library(leaflet) #interactive maps
 
+
 # DASHBOARD ----
 ui <- dashboardPage(
   dashboardHeader(title = "NYC Poverty Research Unit"),
@@ -191,7 +192,7 @@ ui <- dashboardPage(
       ),
       
       ### Report ----
-      #### Report - About -----
+      #### Report: About -----
       tabItem("report_about",
               fluidPage(
                 h1('New York City Government Poverty Measure 2019'),
@@ -209,7 +210,7 @@ ui <- dashboardPage(
                 )
               )
       ),
-      #### Report - Key Findings ----
+      #### Report: Key Findings ----
       tabItem("report_key_findings",
               fluidPage(
                 h1("Key Findings"),
@@ -446,160 +447,6 @@ ui <- dashboardPage(
                 )
                 )
              ),
-      #### Report: Policy & Path ----
-      # tabItem("report_policy_path",
-      #         fluidPage(
-      #           h1("2 | Policy & Path"),
-      #           p('This is the final poverty report issued by the de Blasio administration. As such, it provides an opportunity to look back on the poverty policy of two mayoral terms and its impact. This year’s report shows a decline in poverty and near poverty. The New York City Government (NYCgov) poverty rate fell from 20.2 percent to 17.9 percent from 2014 to 2019, a statistically significant change. The rate for 2019 is the lowest since the start of the de Blasio administration and, in fact, the lowest rate going back to 2005 – the first year captured by the poverty measure. As of 2019, there were 521,000 fewer people in poverty or near poverty than if rates had remained at their 2013 levels. The decline reflects how increases in the minimum wage, rising labor market participation, and the many policies implemented during the de Blasio administration improved the economic well-being of low-income New Yorkers.'),
-      #           p('This year’s report represents a snapshot of poverty and near poverty in New York City before the COVID-19 pandemic arrived in early 2020, so it must be viewed within that context. It nevertheless contains important lessons about the current state of poverty. The report also considers how, as conditions improve and the City reopens (with an infusion of federal help from the American Rescue Plan Act of 2021 that includes significant aid to city governments), it can recover from the negative economic impact of COVID-19.'),
-      #           p('Poverty rates have declined significantly for most demographic groups during this administration’s two terms, as Table 2.1 shows by comparing 2014 and 2019 rates.'),
-      #           h2('Table 2.1: NYCgov Poverty Rates for Persons, by Demographic Characteristic, 2014 and 2019'),
-      #           p('This report includes information on the poverty gap – the amount of money needed to lift all families over the poverty threshold if the funds were perfectly targeted. The overall gap, $6.5 billion in 2019, did not change compared to 2014. But the gap for families with children and for single, nonelderly adults living alone or with unrelated individuals showed statistically significant declines from 2014 to 2019. See Table 2.2.'),
-      #           h2('Table 2.2: NYCgov Poverty Gap, 2014–2019'),
-      #           box(
-      #             title = '2.1 | Jobs and Increased Wages',
-      #             collapsible = TRUE,
-      #             collapsed = TRUE,
-      #             width = 12,
-      #             status = 'primary',
-      #             solidHeader = TRUE,
-      #             p('One of the main lessons from the poverty data going back to 2014 is, not surprisingly, that well-paying jobs play a critical role in lifting people out of poverty and keeping them out. In particular, NYCgov data in this report and reports issued during the de Blasio administration show that the minimum wage has been one of the most powerful forces in moving people above the poverty line and keeping them there.'),
-      #             p('New York State sets the minimum wage in New York City, but the City aggressively worked with the State legislature to raise it through a multi-year phase-in. An increase in the minimum wage to $15 was a centerpiece of the City’s goal of moving 800,000 New Yorkers out of poverty or near poverty between 2013 and 2025. The minimum wage in the city, which was just $7.25 in 2013, rose to $15 for employers with 11 or more workers on the last day of 2018. It rose to $15 for smaller employers on the last day of 2019. That means the data in this year’s report are the first in which all but the smallest employers in the city were paying a minimum wage of $15. Between 2013 and 2019 the poverty threshold rose 16 percent, so New Yorkers benefiting from higher wages and a strong job market also contended with greater expenses. Even so, the actual number of people moved out of poverty or near poverty through the first year of the $15 minimum wage is about 521,000 – a population that would constitute the 35th largest city in the United States and more than the total number of residents of Miami or Atlanta, for instance.'),
-      #             p('The minimum wage reached $15 in a peak year for the job market. By 2019 employment had regained and surpassed jobs lost throughout the Great Recession, and it was a year before the COVID-19-related shutdown occurred. The $15 minimum wage appeared to have no notable impact on employment demand. Labor force participation rose over 5 percent from 2014 to 2019, with more workers engaged in full-time, year-round employment. Wages defining the bottom decile of the labor force grew by over $3,000. These two factors – wage growth and employment opportunity – were core drivers of the declining poverty rate.'),
-      #             p('The City also promoted increased wages in other ways. It has raised wages for its own workforce, nonprofit contracted vendors, and childcare workers. Although many of the workers who benefited from these wage increases were already above poverty or near poverty, in other cases the increases helped to lift families out of poverty or near poverty and into more stable, self-sufficient economic circumstances.'),
-      #             p('In April 2014 the City’s Earned Sick Time Act took effect, requiring many employers in New York City to provide employees with paid sick leave. By requiring employers to pay New Yorkers for days they take off to care for themselves or a family member, the law has increased take-home pay for many. The City has also established a program of free, high-quality universal pre-K and greatly expanded free 3-K. In addition to providing vitally important early childhood education, these programs increase wages in working families by freeing up parents to work more hours without having to pay for childcare.'),
-      #             p('The City has also promoted increased earnings through increased job creation. It has engaged in a wide range of efforts to foster economic development and the expansion of good jobs. In August 2020, the City announced a pledge by 27 of New York City’s largest employers, made in coordination with the Mayor’s Office, to create 100,000 jobs for low-income members of the Black, Latinx, and Asian communities by 2030. As part of this commitment, the New York Jobs CEO Council, a newly created nonprofit group, said it would partner with the City University of New York (CUNY) and the New York City Department of Education (DOE), with the aim of hiring at least 25,000 students by directing them to entry-level jobs, apprenticeships, and work-based learning opportunities.'),
-      #             p('The City looks to job training as an important tool for lifting New Yorkers out of poverty. The City has invested heavily in Jobs-Plus, a proven, place-based employment program for residents of New York City Housing Authority (NYCHA) developments that focuses on providing employment-related services, creating financial incentives that “make work pay,” and promoting community support for work. The City offers other job training programs, including Advance & Earn, a training and employment program for youth between the ages of 16 and 24. The City additionally has significantly expanded the number of slots in the decades-old Summer Youth Employment Program (SYEP) and launched the NYC Center for Youth Employment, a first-of-its-kind office designed to bring focus, rigor, and coordination to helping young people prepare for career success.'),
-      #             p('The City has an array of other initiatives designed to help New Yorkers find well-paying employment. In February 2019, it launched the Disconnected Youth Task Force to examine the obstacles faced by young people between the ages of 16 and 24 who are out of work and not in school. The City also recently launched WorkingNYC, a one-stop online portal that directs New Yorkers to jobs, job training, and educational opportunities.')
-      #             ),
-      #           box(
-      #             title = '2.2 | Affordable Housing',
-      #             collapsible = TRUE,
-      #             collapsed = TRUE,
-      #             width = 12,
-      #             status = 'primary',
-      #             solidHeader = TRUE,
-      #             p('The availability of affordable housing is another important factor in determining whether New Yorkers live above the poverty line. It is especially important in the city because of the high cost of housing compared to other parts of the country, and the large percentage of income New York City households spend on housing. Housing supports that range from public housing to rent regulated units consistently lower the poverty rate by freeing up family resources to meet other needs. The effect has been to lower the poverty rate in the range of approximately 5.5 to 6.6 percentage points in a given year.'),
-      #             p('The City has made a strong commitment to increasing the availability of affordable housing. When Mayor de Blasio took office in 2014, he launched Housing New York with the ambitious goal of creating or preserving 200,000 affordable homes and apartments in ten years. In November 2017, the administration announced it would meet that goal two years early, and launched Housing New York 2.0, a roadmap to a new goal of creating or preserving 300,000 houses or apartments by 2026. Housing New York 2.0 included new initiatives to help New Yorkers buy a first home, afford their rent, and stay in their neighborhoods. In January 2020, the City launched a third phase of Housing New York, YOUR Home NYC, with new initiatives to build and preserve affordable housing, protect renters, and create neighborhood wealth.'),
-      #             p('The City has also focused on helping New Yorkers who have housing to remain in it, since the loss of a home often contributes to a family or individual moving into poverty. In August 2017, the mayor signed a law creating a right to counsel in eviction cases, which has given New Yorkers an important new weapon to ward off eviction and possible homelessness. In January 2019, the mayor established the Mayor’s Office to Protect Tenants by executive order, which coordinates an array of tenant-protection efforts. The City’s Department of Social Services (DSS) operates a program that extends emergency rental assistance to families and individuals at risk of being evicted. In addition, the City launched its first-ever NYC Tenant Resource Portal, an online resource to help New Yorkers who rent their homes to access free City resources to prevent evictions.'),
-      #             p('The City also ramped up efforts to address homelessness, which remains a stubborn problem. It launched the HOME-STAT program, which sends canvassing teams out to identify homeless New Yorkers and connect them with homeless outreach staff who can address their housing and social service needs. Another program, One Shot Deal, extends one-time emergency grants to help New Yorkers facing unexpected circumstances to remain in their housing or assist them in moving into new housing. The City also operates CityFHEPS, a voucher program that helps New Yorkers experiencing homelessness to obtain permanent housing.')
-      #           ),
-      #           box(
-      #             title = '2.3 | Benefits',
-      #             collapsible = TRUE,
-      #             collapsed = TRUE,
-      #             width = 12,
-      #             status = 'primary',
-      #             solidHeader = TRUE,
-      #             p('For many New Yorkers, government benefits of all kinds make the difference between living above the poverty line or below it. For example, combined tax credits such as the Earned Income Tax Credit (EITC) or the Child Tax Credit lower poverty an average of 3 percentage points. Supplemental Nutrition Assistance Program (SNAP) benefits have a similar effect.'),
-      #             p('The City has launched an array of initiatives designed to make it easier for New Yorkers to learn which benefits they qualify for and apply for them. NYC Opportunity updated ACCESS NYC, a digital tool that allows people to easily check their potential eligibility for over 30 federal, New York State, and New York City benefits. Available in over ten languages, the site provides information on how programs work, what documentation is required, how to apply online, and how to receive help. HRA also launched ACCESS HRA, available as a website and as a mobile app, which allows New Yorkers to apply for SNAP and Cash Assistance and regularly check the status of their benefits.'),
-      #             p('The City also introduced an array of reforms that removed obstacles to obtaining benefits. Clients previously were required to “work off” their benefits through the Work Experience Program (WEP) at City and nonprofit agencies. The City eliminated WEP and instead offers new opportunities for subsidized jobs, internships, and education and trainings oriented toward building career pathways.'),
-      #             p('The City has transformed Cash Assistance procedures to reduce unnecessary office visits. This allows clients to submit recertification questionnaires online and submit documents from a smartphone. The City has also put in place new protocols to prevent unnecessary case closings, which required clients to request a State fair hearing to reopen their case. With the new protocols, State fair hearing challenges declined by more than 47 percent.'),
-      #             p('On the policy level, the City has been a strong advocate for increased benefits. In June 2020, the mayor and the City’s Corporation Counsel joined a coalition of state attorneys general in urging Congress to block Trump administration efforts to cut SNAP benefits. In January 2021, President Biden signed an executive order that increased the amount of SNAP benefits people are eligible for, which applied to very low-income households in particular.'),
-      #             p('The City also successfully advocated for a change in State law that permits clients to obtain a college degree while receiving benefits. Participation in a four-year college program was not a permissible employment activity for clients before the change – a limitation that cut many off from degrees that would greatly improve their ability to earn a living wage.')
-      #           ),
-      #           box(
-      #             title = '2.4 | Education',
-      #             collapsible = TRUE,
-      #             collapsed = TRUE,
-      #             width = 12,
-      #             status = 'primary',
-      #             solidHeader = TRUE,
-      #             p('Education is one of the most powerful tools for moving people out of poverty. Extensive data show a strong correlation between education levels and living above the poverty line. It is consistently found that an individual with less than a high school degree is four times more likely to be poor than an individual with a bachelor’s degree or higher. Gaining a high school degree lowers that risk to three times more likely to be poor. The City has heavily invested in initiatives to increase access to education at all levels. New York City has been a national leader in universal pre-K and 3-K, expanding free, high-quality early childhood education, which is shown to be strongly associated with success later in life, including economic success.'),
-      #             p('At the elementary and middle-school levels, the City’s Equity and Excellence for All initiative has introduced an array of improvements and reforms. The City placed reading coaches in every elementary school and continued to expand access to bilingual and dual-language programs.'),
-      #             p('The City has also introduced high school-level programs to increase student access to higher education and their marketable technical skills. It launched the Computer Science for All initiative as part of its Equity and Excellence for All agenda to ensure that all City schools can provide equitable computer science learning experiences to their students. The City’s AP for All initiative similarly brings advanced placement (AP) courses to schools that offer few or no AP courses. In 2018, the City had its highest ever number of students taking and passing AP exams.'),
-      #             p('At the college level, CUNY’s Accelerated Study in Associate Programs (ASAP) has a proven record of helping low-income students remain in school and obtain associate degrees. Since the program’s inception, 14 CUNY ASAP cohorts have totaled 70,000 students admitted across an array of CUNY colleges. Its current three-year graduation rate is 53 percent versus 24 percent for similar students not enrolled in the program. In 2015, NYC Opportunity provided support for Accelerate, Complete, and Engage (ACE), a program similar to CUNY ASAP that supports students pursuing baccalaureate degrees.')
-      #           ),
-      #           box(
-      #             title = '2.5 | Equity',
-      #             collapsible = TRUE,
-      #             collapsed = TRUE,
-      #             width = 12,
-      #             status = 'primary',
-      #             solidHeader = TRUE,
-      #             p('The data in this report, and reports issued over the past two mayoral terms, show that people of color are disproportionately likely to live in poverty and have difficulty rising out of it. The disparities are stubbornly persistent. Poverty rates fell from 2014 to 2019 for all the racial and ethnic groups regularly tracked in this report. But these declines were slow, few significant year-over-year changes exist, and significant changes only appear when measured over the longer term.'),
-      #             p('Even as poverty rates fell, the differences between groups remain. In any given year Hispanic poverty rates are nearly double that of rates for Whites. The average differences in rates for Blacks (nearly 65 percent higher) and Asians (just over 75 percent higher) are also notable. For this reason, racial equity is a critical part of the City’s work to reduce poverty. The City has launched a wide range of initiatives to address racial and other disparities.'),
-      #             p('In May 2019, the mayor signed Executive Order 45 (EO 45), which expanded the City’s focus on equity in its own operations and across New York City. EO 45 directs City agencies to identify disparities in their work based on income, race/ethnicity, gender, and other factors. Agencies are required to develop plans to address identified disparities.'),
-      #             p('To reduce inequity, it is important to know where it exists. To this end, the City has significantly increased the amount and quality of information available on disparities of all kinds. It has published a Social Indicators Report since 2016, which provides a snapshot of social and economic conditions across the City. In 2019, the report was redesigned as the Social Indicators and Equity Report, with significantly more data on disparities by race, gender, income, and other factors. In February 2021, the City launched EquityNYC, a website that presents the data in a highly accessible online format.'),
-      #             p('The City has also promoted equity by increasing its support for Minority and Women-Owned Businesses (M/WBEs). In OneNYC, the blueprint for New York City’s future, the City set a goal of awarding nearly $16 billion out of $25 billion in contracts to M/WBEs by 2020; as of mid-2020 it was running ahead of schedule.'),
-      #             p('In July 2020, the mayor signed an executive order to strengthen M/WBEs. He also announced new initiatives with the Taskforce on Racial Inclusion and Equity to help Black and Latinx entrepreneurs connect with business opportunities, including government contracts.'),
-      #             p('The City has an array of specialized programs designed to promote equity in specific areas. These include NYC Men Teach, the nation’s most ambitious effort to diversify the teaching pipeline. It has a goal of recruiting and retaining 1,000 additional men of color to teach in New York City schools, where less than 8 percent of teachers are men of color.')
-      #           ),
-      #           box(
-      #             title = '2.6 | Immigrant Assistance',
-      #             collapsible = TRUE,
-      #             collapsed = TRUE,
-      #             width = 12,
-      #             status = 'primary',
-      #             solidHeader = TRUE,
-      #             p('The data in this report show that New York City’s immigrants are disproportionately likely to live in poverty. The non-citizen poverty rate fell 5 percentage points from 2014 to 2019, but remains 6 percentage points higher than the poverty rate for native-born citizens. This aligns with the wealth of evidence showing that there are strong economic benefits to obtaining citizenship status. One study sponsored by the Mayor’s Office of Immigrant Affairs (MOIA) found that with naturalization, individual annual earnings increase by an average of 8.9 percent, the employment rate rises 2.2 percentage points, and homeownership increases 6.3 percentage points.1 Starting in 2018, NYC Opportunity began to issue reports specifically analyzing poverty among immigrants in the city. The agency’s “An Economic Profile of Immigrants in New York City”2 provides data and analysis that can help City policymakers identify where poverty exists in immigrant communities and develop strategies for addressing it.'),
-      #             p('MOIA, the City office dedicated to supporting and empowering immigrants, offers an array of programs designed to help immigrants economically succeed. ActionNYC offers all New Yorkers free immigration legal help. It works through a network of trusted community-based organizations (CBOs), delivering its services in public schools, public health facilities, and other CBOs. It also operates a toll-free hotline where immigrants can ask questions and be connected to free and safe legal help. Another program, NYCitizenship, provides free legal help with citizenship applications at select New York Public Library branches.'),
-      #             p('IDNYC, the nation’s most robust municipal ID program, has been of particular help to immigrant New Yorkers. The free identification card, which is issued without regard to immigration status, helps New Yorkers access a wide variety of vital services, including banking; employment; access to public buildings, including schools; and public benefits.')
-      #           ),
-      #           box(
-      #             title = '2.7 | Health and Well-being',
-      #             collapsible = TRUE,
-      #             collapsed = TRUE,
-      #             width = 12,
-      #             status = 'primary',
-      #             solidHeader = TRUE,
-      #             p('Health difficulties are a significant factor that can move people into poverty and keep them there due to the costs associated with being ill, and the fact that illness can interfere with their ability to earn. Out-of-pocket medical spending consistently adds approximately 3 percentage points to the poverty rate.'),
-      #             p('The City has taken a bold stand for universal health care. In January 2019, the mayor announced plans to guarantee health care for all New Yorkers. The initiative was designed to serve the 600,000 New Yorkers who lacked insurance by strengthening MetroPlus, the City’s public health insurance option. The initiative also launched NYC Care, a new program that guarantees anyone eligible for insurance, including undocumented immigrants, direct access to NYC Health + Hospitals physicians, pharmacies, and mental health and substance abuse services.'),
-      #             p('The City has other targeted health initiatives. In July 2018, it launched a comprehensive, four-point program to reduce maternal deaths and life-threatening complications from childbirth among women of color. These maternal mortality rates and the racial disparities within them remain an ongoing challenge. The City announced it would invest $12.8 million in the plan over the next three years, including implicit bias training for private and public health care providers, support for private and public hospitals to enhance data tracking and analysis of maternal mortality events, and other measures.'),
-      #             p('The City has also made mental health a priority through the ThriveNYC initiative. Connections to Care (C2C), a part of ThriveNYC, integrated mental health support into the work of CBOs that serve at-risk and low-income communities across the city. C2C CBOs work with mental health providers who train and coach staff to screen for mental health needs, and either offer clients direct support or connect them with local health care providers. A preliminary program evaluation found that most participants were from ethnic minority backgrounds, with over half reporting incomes of less than $5,000 – an indication that C2C was reaching its intended target population.')
-      #           ),
-      #           box(
-      #             title = '2.8 | Broadband Access',
-      #             collapsible = TRUE,
-      #             collapsed = TRUE,
-      #             width = 12,
-      #             status = 'primary',
-      #             solidHeader = TRUE,
-      #             p('In today’s digital economy, broadband access is important to financial success. The internet is a vital tool for accessing job opportunities, pursuing education, and starting businesses. In January 2020, the City announced its NYC Internet Master Plan, a bold vision for affordable, high-speed, reliable broadband service throughout the five boroughs. The City has promoted broadband access in a variety of ways, with a particular focus on marginalized communities and low-income New Yorkers. In April 2020, the City announced it would provide tablets and internet access to 10,000 seniors in public housing. This $5 million program was designed to reduce isolation among older New Yorkers and help them access information about COVID-19.'),
-      #           ),
-      #           box(
-      #             title = '2.9 | Climate Change',
-      #             collapsible = TRUE,
-      #             collapsed = TRUE,
-      #             width = 12,
-      #             status = 'primary',
-      #             solidHeader = TRUE,
-      #             p('Global climate change has a negative financial impact, particularly on economically vulnerable households. The City has launched or expanded a number of programs designed to help low-income New Yorkers handle the costs associated with rising temperatures, increased flooding, and other effects of climate change. NYC Opportunity’s poverty research team has conducted research and provided input for several climate-related projects. The team participated in a working group that explored affordable flood insurance for homeowners and renters in coastal areas. It also assisted a successful effort to increase utility company energy subsidies to low- income households, based on an updated measure of the burden of household energy costs.'),
-      #           ),
-      #           box(
-      #             title = '2.10 | COVID-19 Response',
-      #             collapsible = TRUE,
-      #             collapsed = TRUE,
-      #             width = 12,
-      #             status = 'primary',
-      #             solidHeader = TRUE,
-      #             p('This year’s report covers a period before the COVID-19 pandemic. It should be noted that when COVID-19 hit New York City in early 2020, the City rapidly and forcefully responded to both the health threat and the extensive economic impact. NYC Opportunity’s poverty research team has analyzed U.S. Census Bureau Pulse Data to assess the financial impact of COVID-19. It has found widespread job and income losses in the city with some groups particularly hard hit, including workers with a high school education or less and Asian workers.3 It also found that the COVID-19 crisis was having a disproportionately large economic impact on women.'),
-      #             p('The City immediately implemented Get Food NYC, a free food distribution program that included grab-and-go meals at New York City schools. The program was available to all children and adults in need, and included emergency home food distribution. The City appointed a COVID-19 Food Czar to coordinate multi-agency efforts. By late September 2020, the Food Czar’s operation had distributed more than 135 million meals to hungry and food-insecure New Yorkers. At the time, it delivered approximately 400,000 meals a day through its Emergency Food Delivery program, which brought meals to homebound low-income New Yorkers. It also served an additional 450,000 grab-and-go meals daily at over 400 New York City school locations.'),
-      #             p('The City launched initiatives to help small businesses and their employees affected by the pandemic, including a small business relief program that made loans available to small businesses affected by COVID-19. The Open Restaurants program allowed restaurants to establish outdoor dining on public roadways and sidewalks. The City also established a Restaurant Revitalization Program, which provides funds to restaurants to pay unemployed and under-employed workers affected by the COVID-19 crisis.'),
-      #             p('When the COVID-19 pandemic began, the City announced a plan to protect vulnerable New Yorkers during heat waves. The plan called for providing over 74,000 air conditioners to seniors whose income was below 60 percent of the state median income and did not have air conditioning at home.'),
-      #             p('As part of its COVID-19 response and to help ensure an equitable recovery, the City also created the Taskforce on Racial Inclusion & Equity. The taskforce has worked on issues such as expanding access to food programs in underserved communities.')
-      #           ),
-      #           box(
-      #             title = '2.11 | The Role of NYC Opportunity',
-      #             collapsible = TRUE,
-      #             collapsed = TRUE,
-      #             width = 12,
-      #             status = 'primary',
-      #             solidHeader = TRUE,
-      #             p('NYC Opportunity was created more than a decade ago with the mission of using evidence and innovation to reduce poverty and increase equity. Located within the Mayor’s Office, the agency works to improve the systems of government by advancing the use of research, data, and design in program and policy development; service delivery; and budget decisions. Its work includes analyzing existing anti-poverty approaches, developing new strategies, facilitating the sharing of data across City agencies, and rigorously assessing the impact of key initiatives. NYC Opportunity manages a discrete fund and collaboratively works with City agencies to design, test, and oversee new programs and digital products.'),
-      #             p('The agency manages a portfolio of initiatives it has developed with its partners and directly oversees, and it offers a variety of services to City agencies to promote data-driven, evidence-based policymaking. The office’s work ranges across five interrelated disciplines: research, service design, digital products, data integration, and programs and evaluations.'),
-      #             p('This poverty report, which was prepared by the NYC Opportunity poverty research team, is a central part of the agency’s research agenda. In 2013, the New York City Charter was revised to require that the mayor issue an annual report on poverty in the city. This report fulfills that mandate, employing a New York City-specific poverty measure created by the agency’s Poverty Research Unit, the NYCgov measure, which more accurately captures poverty in the city than the federal measure.'),
-      #             p('Many of the initiatives discussed in this chapter have been launched, funded, or overseen by NYC Opportunity in partnership with other parts of City government or on its own. The agency’s Service Design Studio and Product Team designed the ACCESS NYC digital tool and continue to operate it. It has played a significant role in CUNY ASAP, Jobs-Plus, Advance & Earn, the Restaurant Revitalization Program, Connections to Care, and Working NYC, among other programs.'),
-      #             p('NYC Opportunity has also worked on many other anti-poverty and equity initiatives not discussed above. Its Service Design Studio created Designing for Opportunity, a program that invites City agencies to propose collaborative projects that bring Studio designers and agency staff together to use service design methods to address poverty-related challenges. The Product team, in partnership with several City agencies, launched the Social Service Location Data initiative, which released a database of verified service delivery locations for contracted social services. It is an important tool for assessing whether the City is equitably delivering services to all communities.'),
-      #             p('NYC Opportunity is deeply involved in the City’s equity work. Its office, alongside the Mayor’s Office of Operations, has helped to implement EO 45, working with City agencies to identify inequities and develop plans for addressing them. It also produces the Social Indicators and Equity Report, and helped to create and maintain EquityNYC.')
-      #           ),
-      #           tags$strong('Past Success and Future Challenges'),
-      #           p('This report shows that in 2019, the New York City government poverty and near poverty rates were at their lowest levels since 2005 – the first year captured by the poverty measure. These rates support the idea that the anti-poverty policies and programs put in place by the de Blasio administration have been effective in moving New Yorkers out of poverty and near poverty – and keeping them out.'),
-      #           p('The poverty and near poverty rates reflect an earlier New York City, before COVID-19 arrived and had a devastating impact on residents’ health and economic well-being. Next year’s poverty report will be the first to show the impact of COVID-19 on poverty in New York City. Nevertheless, this year’s report offers some enduring lessons about poverty in the city, including the significant inequities that exist. It also points to strategies for combatting poverty, which remain relevant today.'),
-      #           p('Future reports may show backsliding on poverty and near poverty as a result of the economic impact of COVID-19. They will also, however, reflect new anti-poverty measures implemented at the federal level starting in 2021, including significant financial support for children in poverty. Given the disproportionate impact of COVID-19, in the coming years the City will need to intently focus on communities that faced the brunt of pandemic-related job losses, and leverage the significant new resources from the federal government in order to return to the steady declines in poverty reflected in this year’s report.')
-      #           )
-      # ),
-      
       #### Report: Measuring Poverty ----
       tabItem("report_measuring",
               fluidPage(
@@ -735,7 +582,7 @@ ui <- dashboardPage(
       ),
       
       ### Data ----
-      #### Data Spotlight -----
+      #### Data: Spotlight -----
       tabItem(tabName = "data_spotlight",
               h1("Spotlight"),
               h3("New York City, 2019"),
@@ -767,7 +614,7 @@ ui <- dashboardPage(
                   )
                 )
               ),
-      #### Data Detail ----
+      #### Data: Detail ----
       tabItem(tabName = 'data_detail',
               fluidPage(
                 h2('How do you compare?'),
@@ -826,7 +673,7 @@ ui <- dashboardPage(
                   )
                 )
               )),
-      #### Data Comparison ----
+      #### Data: Comparison ----
       tabItem(tabName = "data_comparison",
               fluidPage(
                 h2('Drill down into the data...'),
@@ -899,7 +746,7 @@ ui <- dashboardPage(
                   )
                 )
             ),
-      #### Data Map ----
+      #### Data: Map ----
       tabItem(tabName = "data_map",
               fluidPage(
                 box(title = 'Neighborhood Info',
@@ -933,6 +780,8 @@ server <- function(input, output) {
   df = readRDS("data/dataset.RDS")
 
   ## Report ----
+  ### Key Findings ----
+  #### Poverty Rates ----
   # 1.1 Title
   output$report_keyfindings_plot_1_1_title <- renderText({
     paste0('NYCgov and Official Poverty Rates | ', as.character(input$slider_1_1[1]),
@@ -980,6 +829,7 @@ server <- function(input, output) {
       )
     )
   
+  #### Poverty Thresholds ----
   # 1.2 Title
   output$report_keyfindings_plot_1_2_title <- renderText({
     paste0('NYCgov and Official Poverty Thresholds | ', as.character(input$slider_1_2[1]),
@@ -1029,7 +879,7 @@ server <- function(input, output) {
     )
   )
   
-  # Section 1.2 | Multiplot
+  #### Demographics ----
   
   # Title
   output$report_multiplot_title <- renderText({
